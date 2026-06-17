@@ -1,0 +1,55 @@
+<h2>卡片和组件风格</h2>
+<p class="subtitle">选择你喜欢的视觉语言</p>
+
+<div class="options">
+  <div class="option" data-choice="modern" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>现代圆润风</h3>
+      <p>大圆角 (12px)、毛玻璃效果、微阴影、品牌色渐变边框</p>
+      <div style="margin-top:0.75rem;background:rgba(30,41,59,0.8);backdrop-filter:blur(8px);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:1rem;box-shadow:0 4px 24px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+          <span style="font-weight:600;font-size:0.875rem;">当前套餐</span>
+          <span style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:0.125rem 0.5rem;border-radius:6px;font-size:0.75rem;color:#fff;">Pro</span>
+        </div>
+        <div style="height:6px;background:rgba(51,65,85,0.5);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:60%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="clean" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>简洁清晰风</h3>
+      <p>中等圆角 (8px)、纯色背景、干净边框、扁平设计</p>
+      <div style="margin-top:0.75rem;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+          <span style="font-weight:600;font-size:0.875rem;">当前套餐</span>
+          <span style="background:#3b82f6;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.75rem;color:#fff;">Pro</span>
+        </div>
+        <div style="height:4px;background:#334155;border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:60%;background:#3b82f6;border-radius:2px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="minimal" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>极致简约风</h3>
+      <p>无边框卡片、大间距呼吸感、极细分割线、文字为王</p>
+      <div style="margin-top:0.75rem;padding:1rem 0;border-bottom:1px solid rgba(51,65,85,0.3);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:500;font-size:0.875rem;">当前套餐</span>
+          <span style="font-size:0.8rem;color:#3b82f6;">Pro</span>
+        </div>
+        <div style="margin-top:0.75rem;height:2px;background:rgba(51,65,85,0.3);border-radius:1px;overflow:hidden;">
+          <div style="height:100%;width:60%;background:linear-gradient(90deg,#3b82f6,transparent);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

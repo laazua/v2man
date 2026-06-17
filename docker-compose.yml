@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: app/.env
+    depends_on:
+      - db
+    volumes:
+      - static:/app/staticfiles
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: v2man
+      POSTGRES_USER: v2man
+      POSTGRES_PASSWORD: v2man
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
+  static:

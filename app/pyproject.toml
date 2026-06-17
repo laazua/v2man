@@ -1,0 +1,17 @@
+[project]
+name = "v2man"
+version = "0.1.0"
+description = "v2ray node management system"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dj-database-url>=3.1.2",
+    "django>=6.0.6",
+    "django-cors-headers>=4.9.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "gunicorn>=26.0.0",
+    "psycopg2-binary>=2.9.12",
+    "psycopg[binary]>=3.3.4",
+    "python-dotenv>=1.2.2",
+]

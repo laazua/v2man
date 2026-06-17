@@ -1,0 +1,78 @@
+<h2>选择你喜欢的视觉风格</h2>
+<p class="subtitle">白天/黑夜模式 + 整体视觉优化方向</p>
+
+<div class="options">
+  <div class="option" data-choice="dark" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>精化深色主题</h3>
+      <p>在当前深色基础上优化：渐变边框、毛玻璃卡片、更细腻的阴影和过渡动画</p>
+      <div style="margin-top:0.75rem;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:1rem;">
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+          <span style="background:#3b82f6;width:24px;height:24px;border-radius:6px;"></span>
+          <span style="background:#22c55e;width:24px;height:24px;border-radius:6px;"></span>
+          <span style="background:#f59e0b;width:24px;height:24px;border-radius:6px;"></span>
+        </div>
+        <div style="display:flex;gap:1rem;">
+          <div style="flex:1;background:#0f172a;border-radius:6px;padding:0.75rem;border:1px solid #334155;">
+            <div style="height:8px;width:60%;background:#3b82f6;border-radius:4px;margin-bottom:0.5rem;"></div>
+            <div style="height:6px;width:40%;background:#334155;border-radius:3px;"></div>
+          </div>
+          <div style="flex:1;background:#0f172a;border-radius:6px;padding:0.75rem;border:1px solid #334155;">
+            <div style="height:8px;width:60%;background:#22c55e;border-radius:4px;margin-bottom:0.5rem;"></div>
+            <div style="height:6px;width:40%;background:#334155;border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="light" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>清爽浅色主题</h3>
+      <p>干净明亮的浅色风格：白色卡片背景、柔和阴影、品牌蓝点缀</p>
+      <div style="margin-top:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;">
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+          <span style="background:#2563eb;width:24px;height:24px;border-radius:6px;"></span>
+          <span style="background:#16a34a;width:24px;height:24px;border-radius:6px;"></span>
+          <span style="background:#d97706;width:24px;height:24px;border-radius:6px;"></span>
+        </div>
+        <div style="display:flex;gap:1rem;">
+          <div style="flex:1;background:#ffffff;border-radius:6px;padding:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #e2e8f0;">
+            <div style="height:8px;width:60%;background:#2563eb;border-radius:4px;margin-bottom:0.5rem;"></div>
+            <div style="height:6px;width:40%;background:#e2e8f0;border-radius:3px;"></div>
+          </div>
+          <div style="flex:1;background:#ffffff;border-radius:6px;padding:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #e2e8f0;">
+            <div style="height:8px;width:60%;background:#16a34a;border-radius:4px;margin-bottom:0.5rem;"></div>
+            <div style="height:6px;width:40%;background:#e2e8f0;border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="both" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>双主题切换（推荐）</h3>
+      <p>同时支持深色/浅色，用户可一键切换。顶栏添加主题切换按钮，默认跟随系统偏好</p>
+      <div style="margin-top:0.75rem;display:flex;gap:0.75rem;">
+        <div style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:0.75rem;">
+          <div style="text-align:center;font-size:0.75rem;color:#94a3b8;margin-bottom:0.5rem;">深色模式</div>
+          <div style="background:#0f172a;border-radius:4px;padding:0.5rem;">
+            <div style="height:6px;width:50%;background:#3b82f6;border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="flex:1;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:0.75rem;">
+          <div style="text-align:center;font-size:0.75rem;color:#64748b;margin-bottom:0.5rem;">浅色模式</div>
+          <div style="background:#ffffff;border-radius:4px;padding:0.5rem;box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">
+            <div style="height:6px;width:50%;background:#2563eb;border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:1.5rem;color:#94a3b8;font-size:0.875rem;">点击选择一个方向，然后告诉我你喜好的细节</p>
