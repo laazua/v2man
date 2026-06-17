@@ -23,13 +23,17 @@ def _build_v2ray_link(node: Node) -> str:
             "v": "2",
             "ps": node.name,
             "add": node.address,
-            "port": node.port,
+            "port": str(node.port),
             "id": node.config.get("id", ""),
             "aid": node.config.get("aid", "0"),
-            "scy": node.config.get("security", "auto"),
-            "net": node.config.get("network", "tcp"),
+            "scy": node.config.get("scy", "auto"),
+            "net": node.config.get("net", "tcp"),
             "type": node.config.get("type", "none"),
+            "host": node.config.get("host", ""),
+            "path": node.config.get("path", ""),
             "tls": node.config.get("tls", ""),
+            "sni": node.config.get("sni", ""),
+            "alpn": node.config.get("alpn", ""),
         }
         return f"vmess://{base64.b64encode(json.dumps(v, separators=(',', ':')).encode()).decode()}"
     elif node.protocol == "shadowsocks":
