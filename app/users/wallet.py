@@ -17,6 +17,18 @@ class Wallet(models.Model):
         return f'{self.user} ¥{self.balance / 100:.2f}'
 
 
+class PaymentConfig(models.Model):
+    qr_code = models.ImageField(upload_to='payment/', verbose_name='支付宝收款码')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'payment_config'
+        verbose_name = '支付配置'
+
+    def __str__(self) -> str:
+        return f'收款码 (更新于 {self.updated_at})'
+
+
 class Recharge(models.Model):
     STATUS_CHOICES = [
         ('pending', '待确认'),
@@ -27,7 +39,7 @@ class Recharge(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recharges'
     )
     amount = models.BigIntegerField(verbose_name='金额(分)')
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='pending', db_index=True, verbose_name='状态')
     admin_remark = models.TextField(blank=True, verbose_name='管理员备注')
     created_at = models.DateTimeField(auto_now_add=True)
     confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name='确认时间')

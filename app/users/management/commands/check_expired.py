@@ -4,13 +4,17 @@ from users.models import User
 
 
 class Command(BaseCommand):
-    help = '检查到期用户并自动停用'
+    help = '检查到期用户，重置流量并清除套餐'
 
     def handle(self, *args, **options):
         now = timezone.now()
         expired = User.objects.filter(
-            is_active=True, expire_date__isnull=False, expire_date__lte=now
-        )
+            expire_date__isnull=False, expire_date__lte=now
+        ).exclude(plan__isnull=True)
         count = expired.count()
-        expired.update(is_active=False)
-        self.stdout.write(self.style.SUCCESS(f'已停用 {count} 个到期用户'))
+        expired.update(
+            traffic_used=0,
+            traffic_total=0,
+            plan=None,
+        )
+        self.stdout.write(self.style.SUCCESS(f'已重置 {count} 个到期用户的流量和套餐'))

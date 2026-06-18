@@ -15,7 +15,8 @@ v2man/
 ├── app/                    # 后端 Django 项目
 │   ├── config/             # settings, urls, wsgi
 │   ├── users/              # 用户 + JWT 认证 + 钱包/充值
-│   ├── nodes/              # v2ray 节点 + 订阅生成
+│   ├── nodes/              # v2ray 节点 + 订阅生成 + SSH 同步工具
+│   ├── ssh_utils.py    # SSH 直连节点执行配置同步（零依赖系统 ssh 命令）
 │   ├── plans/              # 套餐方案
 │   ├── traffic/            # 流量日志
 │   ├── manage.py
@@ -58,15 +59,6 @@ cd web
 npm run dev                             # 启动 Vite 开发服务器 (:5173)
 npm run build                           # 构建生产版本
 ```
-
-## 参考实现
-
-- 项目整体参考 `https://xn--4gqx1hgtfdmt.com/`（一分机场）
-- 参考站关键特点：
-  - 订阅支持多格式输出：Base64 (V2Ray)、Clash YAML、Sing-box
-  - 多协议节点：VLESS、Hysteria2、Shadowsocks、Trojan
-  - 用户面板展示：订阅链接、剩余流量、到期时间、多客户端配置指南
-  - 按月流量包方案，非固定套餐
 
 ## API 端点
 

@@ -4,8 +4,8 @@ from .models import TrafficLog
 
 class TrafficRecordSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
-    upload_bytes = serializers.IntegerField(min_value=0)
-    download_bytes = serializers.IntegerField(min_value=0)
+    upload_bytes = serializers.BigIntegerField(min_value=0)
+    download_bytes = serializers.BigIntegerField(min_value=0)
     node_name = serializers.CharField(required=False, allow_blank=True, default='')
 
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../api'
 
 interface Recharge {
@@ -17,21 +17,29 @@ async function load() {
 }
 
 async function confirm(r: Recharge) {
-  await api.post(`/admin/recharges/${r.id}/confirm/`)
-  r.status = 'completed'
+  try {
+    await api.post(`/admin/recharges/${r.id}/confirm/`)
+    r.status = 'completed'
+  } catch {
+    // API failed, don't update status optimistically
+  }
 }
 
 async function reject(r: Recharge) {
   const remark = prompt('拒绝原因（可选）') || ''
-  await api.post(`/admin/recharges/${r.id}/reject/`, { remark })
-  r.status = 'failed'
+  try {
+    await api.post(`/admin/recharges/${r.id}/reject/`, { remark })
+    r.status = 'failed'
+  } catch {
+    // API failed, don't update status
+  }
 }
 
 function formatAmount(cents: number) {
   return `¥${(cents / 100).toFixed(2)}`
 }
 
-const filtered = () => filter.value === 'all' ? recharges.value : recharges.value.filter(r => r.status === filter.value)
+const filtered = computed(() => filter.value === 'all' ? recharges.value : recharges.value.filter(r => r.status === filter.value))
 </script>
 
 <template>
@@ -48,10 +56,10 @@ const filtered = () => filter.value === 'all' ? recharges.value : recharges.valu
 
     <div class="table-wrapper">
       <table class="data-table">
-        <thead><tr><th>用户ID</th><th>金额</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
+        <thead><tr><th>用户</th><th>金额</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
         <tbody>
-          <tr v-for="r in filtered()" :key="r.id">
-            <td>{{ r.user }}</td>
+          <tr v-for="r in filtered" :key="r.id">
+            <td>{{ r.username || r.user }}</td>
             <td>{{ formatAmount(r.amount) }}</td>
             <td><span :class="['badge', r.status]">{{ {pending:'待审核',completed:'已完成',failed:'已拒绝'}[r.status] }}</span></td>
             <td>{{ new Date(r.created_at).toLocaleString('zh-CN') }}</td>
@@ -63,7 +71,7 @@ const filtered = () => filter.value === 'all' ? recharges.value : recharges.valu
               <span v-else class="muted">{{ r.status === 'completed' ? '已确认' : '已拒绝' }}</span>
             </td>
           </tr>
-          <tr v-if="!filtered().length"><td colspan="5" class="empty">暂无数据</td></tr>
+          <tr v-if="!filtered.length"><td colspan="5" class="empty">暂无数据</td></tr>
         </tbody>
       </table>
     </div>

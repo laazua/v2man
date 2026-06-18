@@ -3,31 +3,40 @@ import { ref, onMounted } from 'vue'
 import api from '../api'
 
 interface Plan {
-  id: number; name: string; price: string; traffic_limit: number; duration_days: number; is_active: boolean; sort_order: number
+  id: number; name: string; price: string; traffic_limit: number; duration_days: number; is_active: boolean; sort_order: number; nodes: number[]
+}
+
+interface Node {
+  id: number; name: string; protocol: string
 }
 
 const plans = ref<Plan[]>([])
+const allNodes = ref<Node[]>([])
 const editing = ref<Plan | null>(null)
 const showForm = ref(false)
-const form = ref({ name: '', price: 0, traffic_limit: 1024, duration_days: 30, is_active: true, sort_order: 0 })
+const form = ref({ name: '', price: 0, traffic_limit: 1024, duration_days: 30, is_active: true, sort_order: 0, nodes: [] as number[] })
 const error = ref('')
 
 onMounted(() => load())
 
 async function load() {
-  const { data } = await api.get('/admin/plans/')
-  plans.value = data
+  const [planRes, nodeRes] = await Promise.all([
+    api.get('/admin/plans/'),
+    api.get('/admin/nodes/'),
+  ])
+  plans.value = planRes.data
+  allNodes.value = nodeRes.data
 }
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', price: 0, traffic_limit: 1024, duration_days: 30, is_active: true, sort_order: 0 }
+  form.value = { name: '', price: 0, traffic_limit: 1024, duration_days: 30, is_active: true, sort_order: 0, nodes: [] }
   showForm.value = true
 }
 
 function openEdit(p: Plan) {
   editing.value = p
-  form.value = { name: p.name, price: Number(p.price), traffic_limit: p.traffic_limit, duration_days: p.duration_days, is_active: p.is_active, sort_order: p.sort_order }
+  form.value = { name: p.name, price: Number(p.price), traffic_limit: p.traffic_limit, duration_days: p.duration_days, is_active: p.is_active, sort_order: p.sort_order, nodes: [...(p.nodes || [])] }
   showForm.value = true
 }
 
@@ -72,6 +81,15 @@ async function remove(p: Plan) {
           <label>排序 <input v-model.number="form.sort_order" type="number" /></label>
           <label>启用 <select v-model="form.is_active"><option :value="true">是</option><option :value="false">否</option></select></label>
         </div>
+        <label class="full-width">关联节点
+          <div class="node-checkbox-list">
+            <label v-for="n in allNodes" :key="n.id" class="node-checkbox">
+              <input type="checkbox" :value="n.id" v-model="form.nodes" />
+              {{ n.name }} ({{ n.protocol }})
+            </label>
+            <span v-if="!allNodes.length" class="text-muted">暂无节点，请先在节点管理中添加</span>
+          </div>
+        </label>
         <p v-if="error" class="error">{{ error }}</p>
         <div class="form-actions">
           <button @click="showForm = false" class="btn-secondary">取消</button>
@@ -82,17 +100,18 @@ async function remove(p: Plan) {
 
     <div class="table-wrapper">
       <table class="data-table">
-        <thead><tr><th>名称</th><th>价格</th><th>流量</th><th>天数</th><th>启用</th><th>操作</th></tr></thead>
+        <thead><tr><th>名称</th><th>价格</th><th>流量</th><th>天数</th><th>节点</th><th>启用</th><th>操作</th></tr></thead>
         <tbody>
           <tr v-for="p in plans" :key="p.id">
             <td>{{ p.name }}</td><td>¥{{ p.price }}</td><td>{{ p.traffic_limit }} MB</td><td>{{ p.duration_days }} 天</td>
+            <td>{{ (p.nodes || []).length }}</td>
             <td>{{ p.is_active ? '是' : '否' }}</td>
             <td class="actions">
               <button @click="openEdit(p)" class="btn-sm">编辑</button>
               <button @click="remove(p)" class="btn-sm btn-danger">删除</button>
             </td>
           </tr>
-          <tr v-if="!plans.length"><td colspan="6" class="empty">暂无数据</td></tr>
+          <tr v-if="!plans.length"><td colspan="7" class="empty">暂无数据</td></tr>
         </tbody>
       </table>
     </div>
@@ -125,6 +144,11 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: var(--text-secondary); }
 input, select { padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.2s; }
 input:focus, select:focus { border-color: var(--accent); }
+.full-width { grid-column: 1 / -1; }
+.node-checkbox-list { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); margin-top: 0.25rem; }
+.node-checkbox { display: flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; cursor: pointer; }
+.node-checkbox input { width: auto; }
+.text-muted { color: var(--text-muted); font-size: 0.8rem; }
 .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
 .error { color: var(--danger); font-size: 0.85rem; }
 .empty { text-align: center; color: var(--text-muted); padding: 2rem; }

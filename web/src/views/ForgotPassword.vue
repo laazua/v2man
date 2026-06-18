@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api'
 import { useSiteName } from '../api/site'
@@ -16,6 +16,8 @@ const showPwd = ref(false)
 const showConfirm = ref(false)
 const msg = ref('')
 const error = ref('')
+const timers: ReturnType<typeof setTimeout>[] = []
+onUnmounted(() => timers.forEach(clearTimeout))
 
 async function sendReset() {
   msg.value = ''
@@ -46,7 +48,8 @@ async function confirmReset() {
       password: password.value,
     })
     msg.value = '密码已重置，即将跳转登录'
-    setTimeout(() => router.push('/login'), 2000)
+    const t = setTimeout(() => router.push('/login'), 2000)
+    timers.push(t)
   } catch (e: any) {
     error.value = e.response?.data?.error || '重置失败'
   }

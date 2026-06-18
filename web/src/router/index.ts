@@ -16,6 +16,12 @@ const routes: RouteRecordRaw[] = [
       { path: 'nodes', name: 'Nodes', component: () => import('../views/Nodes.vue') },
       { path: 'plans', name: 'Plans', component: () => import('../views/Plans.vue') },
       { path: 'recharge', name: 'Recharge', component: () => import('../views/Recharge.vue') },
+      { path: 'subscription', name: 'Subscription', component: () => import('../views/Subscription.vue') },
+      { path: 'tutorials', name: 'Tutorials', component: () => import('../views/Tutorials.vue') },
+      { path: 'invite', name: 'Invite', component: () => import('../views/Invite.vue') },
+      { path: 'contact', name: 'Contact', component: () => import('../views/Contact.vue') },
+      { path: 'notifications', name: 'Notifications', component: () => import('../views/Notifications.vue') },
+      { path: 'notifications/:id', name: 'NotificationDetail', component: () => import('../views/NotificationDetail.vue') },
       {
         path: 'admin',
         children: [
@@ -24,6 +30,10 @@ const routes: RouteRecordRaw[] = [
           { path: 'nodes', name: 'AdminNodes', component: () => import('../views/AdminNodes.vue') },
           { path: 'plans', name: 'AdminPlans', component: () => import('../views/AdminPlans.vue') },
           { path: 'recharges', name: 'AdminRecharges', component: () => import('../views/AdminRecharges.vue') },
+          { path: 'invite', name: 'AdminInvite', component: () => import('../views/AdminInvite.vue') },
+          { path: 'notifications', name: 'AdminNotifications', component: () => import('../views/AdminNotifications.vue') },
+          { path: 'contact', name: 'AdminContact', component: () => import('../views/AdminContact.vue') },
+          { path: 'payment-qr', name: 'AdminPaymentQr', component: () => import('../views/AdminPaymentQr.vue') },
         ],
       },
     ],

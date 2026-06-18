@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils import timezone
 from .models import User
-from .wallet import Wallet, Recharge
+from .wallet import Wallet, Recharge, PaymentConfig
+from invite.models import Referral, SystemSetting
 
 
 @admin.register(User)
@@ -30,9 +31,24 @@ class RechargeAdmin(admin.ModelAdmin):
             wallet, _ = Wallet.objects.get_or_create(user=r.user)
             wallet.balance += r.amount
             wallet.save()
+
+            try:
+                ref = Referral.objects.get(invited=r.user)
+                pct = int(SystemSetting.get('referral_percentage', '20'))
+                credit = r.amount * pct // 100
+                if credit > 0:
+                    inviter_wallet, _ = Wallet.objects.get_or_create(user=ref.inviter)
+                    inviter_wallet.balance += credit
+                    inviter_wallet.save()
+                    ref.earned += credit
+                    ref.save()
+            except Referral.DoesNotExist:
+                pass
+
             count += 1
         self.message_user(request, f'已确认 {count} 笔充值')
     confirm_recharge.short_description = '确认选中的充值'
 
 
 admin.site.register(Wallet)
+admin.site.register(PaymentConfig)

@@ -5,12 +5,14 @@ from .wallet import Recharge
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    invite_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'invite_code']
 
     def create(self, validated_data):
+        validated_data.pop('invite_code', None)
         return User.objects.create_user(**validated_data)
 
 
@@ -24,8 +26,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
                   'traffic_used', 'traffic_total', 'expire_date', 'date_joined', 'is_staff']
 
     def get_balance(self, obj):
-        wallet = getattr(obj, 'wallet', None)
-        return wallet.balance if wallet else 0
+        try:
+            return obj.wallet.balance
+        except Exception:
+            return 0
 
 
 class RechargeSerializer(serializers.ModelSerializer):

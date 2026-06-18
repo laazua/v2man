@@ -12,19 +12,20 @@ from .models import Node
 from .subscription import Subscription
 
 
-def _build_v2ray_link(node: Node) -> str:
+def _build_v2ray_link(node: Node, user_uuid: str = "") -> str:
     """Generate standard V2Ray subscription link based on protocol."""
+    uid = user_uuid or node.config.get("id", "")
     if node.protocol == "vless":
         params = node.config or {}
-        query = "&".join(f"{k}={v}" for k, v in params.items() if v)
-        return f"vless://{node.config.get('id', '')}@{node.address}:{node.port}?{query}#{node.name}"
+        query = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
+        return f"vless://{uid}@{node.address}:{node.port}?{query}#{node.name}"
     elif node.protocol == "vmess":
         v = {
             "v": "2",
             "ps": node.name,
             "add": node.address,
             "port": str(node.port),
-            "id": node.config.get("id", ""),
+            "id": uid,
             "aid": node.config.get("aid", "0"),
             "scy": node.config.get("scy", "auto"),
             "net": node.config.get("net", "tcp"),
@@ -60,29 +61,41 @@ def _build_v2ray_link(node: Node) -> str:
     return ""
 
 
-def _generate_base64(nodes) -> str:
+def _generate_base64(nodes, user_uuid: str = "") -> str:
     links = []
     for node in nodes:
-        link = _build_v2ray_link(node)
+        link = _build_v2ray_link(node, user_uuid)
         if link:
             links.append(link)
     return base64.b64encode("\n".join(links).encode()).decode()
 
 
-def _generate_clash(nodes) -> str:
+def _generate_clash(nodes, user_uuid: str = "") -> str:
     """Generate Clash YAML format proxies."""
     lines = []
     for node in nodes:
+        uid = user_uuid or node.config.get("id", "")
         if node.protocol == "vless":
-            id_ = node.config.get("id", "")
             flow = node.config.get("flow", "")
             lines.append(f"  - name: {node.name}")
             lines.append(f"    type: vless")
             lines.append(f"    server: {node.address}")
             lines.append(f"    port: {node.port}")
-            lines.append(f"    uuid: {id_}")
+            lines.append(f"    uuid: {uid}")
             lines.append(f"    flow: {flow}")
-            lines.append(f"    tls: {bool(node.config.get('tls', False))}")
+            lines.append(f"    tls: {'true' if node.config.get('tls') else 'false'}")
+            lines.append(f"    skip-cert-verify: true")
+            lines.append(f"    udp: true")
+        elif node.protocol == "vmess":
+            lines.append(f"  - name: {node.name}")
+            lines.append(f"    type: vmess")
+            lines.append(f"    server: {node.address}")
+            lines.append(f"    port: {node.port}")
+            lines.append(f"    uuid: {uid}")
+            lines.append(f"    alterId: {node.config.get('aid', '0')}")
+            lines.append(f"    cipher: {node.config.get('scy', 'auto')}")
+            lines.append(f"    network: {node.config.get('net', 'tcp')}")
+            lines.append(f"    tls: {'true' if node.config.get('tls') else 'false'}")
             lines.append(f"    skip-cert-verify: true")
             lines.append(f"    udp: true")
         elif node.protocol == "shadowsocks":
@@ -113,10 +126,11 @@ def _generate_clash(nodes) -> str:
     return "\n".join(lines)
 
 
-def _generate_singbox(nodes) -> str:
+def _generate_singbox(nodes, user_uuid: str = "") -> str:
     """Generate Sing-box JSON format outbounds."""
     outbounds = []
     for node in nodes:
+        uid = user_uuid or node.config.get("id", "")
         tag = node.name
         if node.protocol == "vless":
             outbounds.append({
@@ -124,9 +138,19 @@ def _generate_singbox(nodes) -> str:
                 "tag": tag,
                 "server": node.address,
                 "server_port": node.port,
-                "uuid": node.config.get("id", ""),
+                "uuid": uid,
                 "flow": node.config.get("flow", ""),
                 "tls": {"enabled": bool(node.config.get("tls", False))},
+            })
+        elif node.protocol == "vmess":
+            outbounds.append({
+                "type": "vmess",
+                "tag": tag,
+                "server": node.address,
+                "server_port": node.port,
+                "uuid": uid,
+                "alter_id": int(node.config.get("aid", "0")),
+                "security": node.config.get("scy", "auto"),
             })
         elif node.protocol == "shadowsocks":
             outbounds.append({
@@ -175,16 +199,17 @@ class SubscriptionView(APIView):
         if not user.plan or (user.expire_date and user.expire_date < timezone.now()):
             return Response({"error": "未购买套餐或套餐已过期"}, status=status.HTTP_403_FORBIDDEN)
 
-        nodes = Node.objects.filter(is_active=True)
+        nodes = user.plan.nodes.filter(is_active=True)
+        user_uuid = str(user.uuid)
 
         if fmt == "clash":
-            proxies = _generate_clash(nodes)
+            proxies = _generate_clash(nodes, user_uuid)
             content = f"""proxies:
 {proxies}"""
             return HttpResponse(content, content_type="application/yaml")
         elif fmt == "singbox":
-            content = _generate_singbox(nodes)
+            content = _generate_singbox(nodes, user_uuid)
             return HttpResponse(content, content_type="application/json")
         else:
-            content = _generate_base64(nodes)
+            content = _generate_base64(nodes, user_uuid)
             return HttpResponse(content, content_type="text/plain")

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api, { setTokens } from '../api'
 import { useSiteName } from '../api/site'
 
 const router = useRouter()
+const route = useRoute()
 const siteName = useSiteName()
 const username = ref('')
 const email = ref('')
@@ -12,16 +13,19 @@ const password = ref('')
 const showPwd = ref(false)
 const error = ref('')
 const loading = ref(false)
+const inviteCode = ref((route.query.invite as string) || '')
 
 async function register() {
   loading.value = true
   error.value = ''
   try {
-    await api.post('/auth/register/', {
+    const payload: Record<string, any> = {
       username: username.value,
       email: email.value,
       password: password.value,
-    })
+    }
+    if (inviteCode.value) payload.invite_code = inviteCode.value
+    await api.post('/auth/register/', payload)
     const { data } = await api.post('/auth/login/', {
       username: username.value,
       password: password.value,
@@ -93,7 +97,7 @@ async function register() {
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
-            <input v-model="email" type="email" placeholdername="请输入邮箱" required />
+            <input v-model="email" type="email" placeholder="请输入邮箱" required />
           </div>
         </div>
         <div class="input-group">

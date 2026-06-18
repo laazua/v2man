@@ -1,3 +1,4 @@
+import math
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -26,7 +27,7 @@ class TrafficRecordView(APIView):
             node_name=serializer.validated_data.get('node_name', ''),
         )
         total = serializer.validated_data['upload_bytes'] + serializer.validated_data['download_bytes']
-        user.traffic_used = (user.traffic_used or 0) + total // (1024 * 1024)
+        user.traffic_used = (user.traffic_used or 0) + max(1, math.ceil(total / (1024 * 1024)))
         user.save(update_fields=['traffic_used'])
 
         return Response({'success': True, 'id': log.id})
@@ -44,8 +45,12 @@ class TrafficStatsView(APIView):
             )
             .order_by('-date')
         )
-        total_upload = logs.aggregate(s=Sum('upload_bytes'))['s'] or 0
-        total_download = logs.aggregate(s=Sum('download_bytes'))['s'] or 0
+        totals = logs.aggregate(
+            total_upload=Sum('upload_bytes'),
+            total_download=Sum('download_bytes'),
+        )
+        total_upload = totals['total_upload'] or 0
+        total_download = totals['total_download'] or 0
         return Response({
             'daily': [
                 {

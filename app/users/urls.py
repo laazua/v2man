@@ -10,4 +10,6 @@ urlpatterns = [
     path('recharge/', views.RechargeView.as_view(), name='recharge'),
     path('password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset'),
     path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('payment/qr/', views.PaymentQRPublicView.as_view(), name='payment-qr'),
+    path('payment/qr-image/', views.PaymentQRImageView.as_view(), name='payment-qr-image'),
 ]

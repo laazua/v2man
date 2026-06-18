@@ -11,8 +11,7 @@ class User(AbstractUser):
     )
     traffic_used = models.BigIntegerField(default=0, verbose_name="已用流量(MB)")
     traffic_total = models.BigIntegerField(default=0, verbose_name="总流量(MB)")
-    expire_date = models.DateTimeField(null=True, blank=True, verbose_name="到期时间")
-    subscribe_url = models.CharField(max_length=256, blank=True, verbose_name="订阅链接")
+    expire_date = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name="到期时间")
 
     class Meta:
         db_table = "users"
