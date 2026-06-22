@@ -1,3 +1,4 @@
+import logging
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +8,8 @@ from .models import Plan
 from .serializers import PlanSerializer
 from nodes.subscription import Subscription
 from users.wallet import Wallet
+
+logger = logging.getLogger('business')
 
 
 class PlanListView(generics.ListAPIView):
@@ -71,6 +74,8 @@ class PurchaseView(APIView):
                     'sync_errors': sync_errors,
                 }, status=status.HTTP_502_BAD_GATEWAY)
 
+        logger.info('用户购买套餐: user_id=%s plan_id=%s plan_name=%s price=%s balance_remaining=%s',
+                     user.id, plan.id, plan.name, plan.price, wallet.balance if wallet else 0)
         return Response({
             'success': True,
             'message': f'已购买 {plan.name}',

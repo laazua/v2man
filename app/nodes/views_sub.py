@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 
 from django.http import HttpResponse
 from django.utils import timezone
@@ -10,6 +11,8 @@ from rest_framework.permissions import AllowAny
 
 from .models import Node
 from .subscription import Subscription
+
+logger = logging.getLogger('business')
 
 
 def _build_v2ray_link(node: Node, user_uuid: str = "") -> str:
@@ -202,6 +205,8 @@ class SubscriptionView(APIView):
         nodes = user.plan.nodes.filter(is_active=True)
         user_uuid = str(user.uuid)
 
+        logger.info('订阅请求: user_id=%s format=%s nodes=%d',
+                     user.id, fmt, nodes.count())
         if fmt == "clash":
             proxies = _generate_clash(nodes, user_uuid)
             content = f"""proxies:

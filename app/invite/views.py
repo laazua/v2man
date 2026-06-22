@@ -1,3 +1,4 @@
+import logging
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,11 +7,14 @@ from .models import InviteCode, Referral, Withdrawal, SystemSetting
 from .serializers import InviteCodeSerializer, ReferralSerializer, WithdrawalSerializer, AdminWithdrawalSerializer, SystemSettingSerializer
 from users.wallet import Wallet
 
+logger = logging.getLogger('business')
+
 
 class GenerateInviteCodeView(APIView):
     def post(self, request):
         code = InviteCode.objects.create(owner=request.user)
         serializer = InviteCodeSerializer(code)
+        logger.info('用户生成邀请码: user_id=%s code=%s', request.user.id, code.code)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -68,6 +72,7 @@ class CreateWithdrawalView(APIView):
             wallet.save()
             w = Withdrawal.objects.create(user=request.user, amount=amount)
 
+        logger.info('用户创建提现: user_id=%s amount=%s', request.user.id, amount)
         return Response(WithdrawalSerializer(w).data, status=status.HTTP_201_CREATED)
 
 
@@ -95,8 +100,9 @@ class SettingsView(APIView):
             if key not in allowed_keys:
                 return Response({'error': f'不允许的配置项: {key}'}, status=400)
             SystemSetting.objects.update_or_create(key=key, defaults={'value': str(value)})
-        return Response({'success': True})
 
+        logger.info('管理员更新推广设置: admin_id=%s', request.user.id)
+        return Response({'success': True})
 
 class AdminWithdrawalListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
@@ -128,4 +134,6 @@ class AdminWithdrawalActionView(APIView):
         w.processed_at = timezone.now()
         w.note = request.data.get('note', '')
         w.save()
+        logger.info('管理员处理提现: admin_id=%s withdrawal_id=%s action=%s user_id=%s amount=%s',
+                     request.user.id, w.id, action, w.user_id, w.amount)
         return Response({'success': True})

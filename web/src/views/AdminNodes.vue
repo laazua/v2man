@@ -166,7 +166,7 @@ async function deploy(node: Node) {
     <div class="table-wrapper">
       <table class="data-table">
         <thead>
-          <tr><th>名称</th><th>协议</th><th>地址</th><th>端口</th><th>SSH</th><th>部署</th><th>状态</th><th>操作</th></tr>
+          <tr><th>名称</th><th>协议</th><th>地址</th><th>端口</th><th>SSH</th><th>部署</th><th>部署状态</th><th>操作</th></tr>
         </thead>
         <tbody>
           <tr v-for="node in nodes" :key="node.id">
@@ -186,6 +186,8 @@ async function deploy(node: Node) {
                 <span v-if="deployResultMap[node.id].success" class="deploy-ok" style="font-size:0.75rem">成功</span>
                 <span v-else @click="openDeployDetail(node.name, deployResultMap[node.id])" class="deploy-err-link" style="font-size:0.75rem;cursor:pointer;text-decoration:underline">失败</span>
               </template>
+              <span v-else-if="node.deployed_at" class="deploy-badge" :title="'上次部署: ' + new Date(node.deployed_at).toLocaleString()">已部署</span>
+              <span v-else style="color:var(--text-muted);font-size:0.75rem">未部署</span>
             </td>
             <td class="actions">
               <button @click="openEdit(node)" class="btn-sm">编辑</button>
@@ -255,4 +257,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .deploy-err { color: var(--danger); }
 .deploy-err-link { color: var(--danger); cursor: pointer; text-decoration: underline; }
 .deploy-err-link:hover { opacity: 0.8; }
+.deploy-badge { background: rgba(34,197,94,0.12); color: var(--success); padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: help; }
 </style>

@@ -1,4 +1,5 @@
 import math
+import logging
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +8,8 @@ from django.db.models.functions import TruncDate
 from .models import TrafficLog
 from users.models import User
 from .serializers import TrafficRecordSerializer
+
+logger = logging.getLogger('business')
 
 
 class TrafficRecordView(APIView):
@@ -30,6 +33,10 @@ class TrafficRecordView(APIView):
         user.traffic_used = (user.traffic_used or 0) + max(1, math.ceil(total / (1024 * 1024)))
         user.save(update_fields=['traffic_used'])
 
+        logger.info('管理员录入流量: user_id=%s upload=%s download=%s node=%s',
+                     user.id, serializer.validated_data['upload_bytes'],
+                     serializer.validated_data['download_bytes'],
+                     serializer.validated_data.get('node_name', ''))
         return Response({'success': True, 'id': log.id})
 
 

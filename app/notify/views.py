@@ -1,8 +1,11 @@
+import logging
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Notification, NotificationRead
 from .serializers import NotificationSerializer
+
+logger = logging.getLogger('business')
 
 
 class NotificationListView(generics.ListAPIView):

@@ -1,6 +1,9 @@
 import uuid
+import logging
 from django.db import models
 from django.conf import settings
+
+logger = logging.getLogger('business')
 
 
 class Wallet(models.Model):
@@ -16,6 +19,21 @@ class Wallet(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user} ¥{self.balance / 100:.2f}'
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        if not is_new:
+            try:
+                old = type(self).objects.get(pk=self.pk)
+                if old.balance != self.balance:
+                    diff = self.balance - old.balance
+                    logger.info('钱包余额变更: user_id=%s 变动=%s 原余额=%s 新余额=%s',
+                                self.user_id, diff, old.balance, self.balance)
+            except type(self).DoesNotExist:
+                pass
+        else:
+            logger.info('钱包创建: user_id=%s 初始余额=%s', self.user_id, self.balance)
+        super().save(*args, **kwargs)
 
 
 class PaymentConfig(models.Model):

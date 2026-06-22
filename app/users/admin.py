@@ -1,8 +1,11 @@
+import logging
 from django.contrib import admin
 from django.utils import timezone
 from .models import User
 from .wallet import Wallet, Recharge, PaymentConfig
 from invite.models import Referral, SystemSetting
+
+logger = logging.getLogger('business')
 
 
 @admin.register(User)
@@ -31,6 +34,8 @@ class RechargeAdmin(admin.ModelAdmin):
             wallet, _ = Wallet.objects.get_or_create(user=r.user)
             wallet.balance += r.amount
             wallet.save()
+            logger.info('Admin确认充值: admin=%s recharge_id=%s user_id=%s amount=%s',
+                        request.user.id, r.id, r.user_id, r.amount)
 
             try:
                 ref = Referral.objects.get(invited=r.user)
@@ -42,6 +47,7 @@ class RechargeAdmin(admin.ModelAdmin):
                     inviter_wallet.save()
                     ref.earned += credit
                     ref.save()
+                    logger.info('充值返佣: recharge_id=%s inviter_id=%s credit=%s', r.id, ref.inviter_id, credit)
             except Referral.DoesNotExist:
                 pass
 

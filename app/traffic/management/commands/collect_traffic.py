@@ -1,4 +1,5 @@
 import math
+import logging
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
@@ -8,6 +9,7 @@ from nodes.models import Node
 from nodes.ssh_utils import collect_node_traffic
 from traffic.models import TrafficLog
 
+logger = logging.getLogger('business')
 User = get_user_model()
 
 
@@ -90,3 +92,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"\n完成: {total_records} 条记录, {total_mb} MB"
         ))
+        logger.info('定时采集流量完成: 节点数=%s 记录数=%s 流量=%sMB', qs.count(), total_records, total_mb)

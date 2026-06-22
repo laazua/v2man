@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.conf import settings
@@ -14,6 +15,8 @@ from nodes.subscription import Subscription
 from .wallet import Recharge, PaymentConfig, PaymentOrder, Wallet
 from invite.models import InviteCode, Referral, SystemSetting
 from payment.drivers import get_payment_driver
+
+logger = logging.getLogger('business')
 
 
 class RegisterView(generics.CreateAPIView):
@@ -34,6 +37,7 @@ class RegisterView(generics.CreateAPIView):
             except InviteCode.DoesNotExist:
                 pass
 
+        logger.info('用户注册: id=%s username=%s invite_code=%s', user.id, user.username, code_str or '无')
         return Response({
             'user': UserProfileSerializer(user).data,
             'message': '注册成功',
@@ -57,13 +61,17 @@ class ProfileView(APIView):
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
 
+        changed = []
         if email is not None:
             user.email = email
+            changed.append('email')
         if new_password:
             if not old_password or not user.check_password(old_password):
                 return Response({'error': '原密码不正确'}, status=status.HTTP_400_BAD_REQUEST)
             user.set_password(new_password)
+            changed.append('password')
         user.save()
+        logger.info('用户资料更新: id=%s changed=%s', user.id, changed)
         return Response(UserProfileSerializer(user).data)
 
 
@@ -84,6 +92,7 @@ class RechargeView(APIView):
         if amount < 1:
             return Response({'error': '金额必须大于0'}, status=status.HTTP_400_BAD_REQUEST)
         Recharge.objects.create(user=request.user, amount=amount)
+        logger.info('用户提交充值: user_id=%s amount=%s', request.user.id, amount)
         return Response({'success': True, 'message': '充值已提交，等待管理员确认'})
 
 
@@ -125,6 +134,8 @@ class PaymentCreateView(APIView):
             out_trade_no=out_trade_no,
         )
 
+        logger.info('创建支付订单: user_id=%s amount=%s out_trade_no=%s driver=%s',
+                     request.user.id, amount, out_trade_no, SystemSetting.get('payment_driver', 'simulate'))
         from .serializers import PaymentOrderSerializer
         data = PaymentOrderSerializer(order).data
         data.update(result)
@@ -140,8 +151,7 @@ class PaymentNotifyView(APIView):
 
         xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
         remote_ip = xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '')
-        import logging
-        logger = logging.getLogger(__name__)
+        logger.info('支付回调: ip=%s driver=%s', remote_ip, driver_name)
 
         if driver_name == 'simulate':
             if not request.user.is_authenticated:
@@ -265,6 +275,7 @@ class PasswordResetRequestView(APIView):
             return Response({'error': '邮件发送失败，请检查邮箱配置'}, status=500)
 
         cache.set(cache_key, True, 60)
+        logger.info('密码重置请求: email=%s', email)
         return Response({'success': True, 'message': '重置链接已发送到您的邮箱'})
 
 
@@ -298,4 +309,5 @@ class PasswordResetConfirmView(APIView):
         cache.delete(cache_key)
         user.set_password(password)
         user.save()
+        logger.info('密码重置成功: user_id=%s', user.id)
         return Response({'success': True, 'message': '密码已重置，请重新登录'})

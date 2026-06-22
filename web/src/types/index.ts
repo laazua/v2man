@@ -29,6 +29,7 @@ export interface Node {
   ssh_port: number
   ssh_user: string
   ssh_configured: boolean
+  deployed_at: string | null
 }
 
 export interface Plan {

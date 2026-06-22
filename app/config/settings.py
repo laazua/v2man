@@ -31,6 +31,65 @@ INSTALLED_APPS = [
     'payment',
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'level': 'DEBUG',
+        },
+        'business_file': {
+            'class': 'config.log_config.SizeAndTimeRotatingFileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'business.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backup_count': 30,
+            'max_bytes': 104857600,
+            'formatter': 'standard',
+            'level': 'INFO',
+        },
+        'error_file': {
+            'class': 'config.log_config.SizeAndTimeRotatingFileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'error.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backup_count': 90,
+            'max_bytes': 104857600,
+            'formatter': 'standard',
+            'level': 'WARNING',
+        },
+    },
+    'loggers': {
+        'business': {
+            'handlers': ['business_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api.requests': {
+            'handlers': ['business_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'config.middleware': {
+            'handlers': ['error_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console', 'error_file'],
+        'level': 'DEBUG',
+    },
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -40,6 +99,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.APILogMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

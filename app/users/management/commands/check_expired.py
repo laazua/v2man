@@ -1,6 +1,9 @@
+import logging
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from users.models import User
+
+logger = logging.getLogger('business')
 
 
 class Command(BaseCommand):
@@ -19,3 +22,5 @@ class Command(BaseCommand):
             is_active=False,
         )
         self.stdout.write(self.style.SUCCESS(f'已重置 {count} 个到期用户的流量和套餐'))
+        if count > 0:
+            logger.info('定时检查到期: 已重置 %s 个用户', count)

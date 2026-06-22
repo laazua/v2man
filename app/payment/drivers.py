@@ -1,6 +1,9 @@
+import logging
 from abc import ABC, abstractmethod
 
 from django.conf import settings
+
+logger = logging.getLogger('business')
 
 
 class PaymentDriver(ABC):
@@ -15,12 +18,14 @@ class PaymentDriver(ABC):
 
 class SimulateDriver(PaymentDriver):
     def create_order(self, request, user, amount, out_trade_no):
+        logger.info('模拟支付下单: user_id=%s amount=%s out_trade_no=%s', user.id, amount, out_trade_no)
         return {'out_trade_no': out_trade_no}
 
     def verify_notification(self, request):
         import time
         out_trade_no = request.data.get('out_trade_no', '')
         trade_no = request.data.get('trade_no', f'SIM{int(time.time())}')
+        logger.info('模拟支付验签: out_trade_no=%s trade_no=%s', out_trade_no, trade_no)
         return {'out_trade_no': out_trade_no, 'trade_no': trade_no}
 
 
@@ -55,11 +60,13 @@ class AlipayDriver(PaymentDriver):
             subject='v2man 充值',
         )
         if result.get('code') == '10000' and result.get('msg') == 'Success':
+            logger.info('支付宝下单成功: user_id=%s amount=%s out_trade_no=%s', user.id, amount, out_trade_no)
             return {
                 'out_trade_no': out_trade_no,
                 'qr_code': result.get('qr_code', ''),
             }
         error = result.get('sub_msg', result.get('msg', '未知错误'))
+        logger.error('支付宝下单失败: user_id=%s amount=%s error=%s', user.id, amount, error)
         raise Exception(f'支付宝下单失败: {error}')
 
     def verify_notification(self, request):
@@ -67,7 +74,9 @@ class AlipayDriver(PaymentDriver):
         data = request.data.copy()
         signature = data.pop('sign', '')
         if not alipay.verify(data, signature):
+            logger.warning('支付宝验签失败: out_trade_no=%s', data.get('out_trade_no', ''))
             return None
+        logger.info('支付宝验签成功: out_trade_no=%s trade_no=%s', data.get('out_trade_no'), data.get('trade_no'))
         return {
             'out_trade_no': data.get('out_trade_no'),
             'trade_no': data.get('trade_no'),
@@ -78,6 +87,7 @@ def get_payment_driver(request=None):
     from invite.models import SystemSetting
 
     driver_name = SystemSetting.get('payment_driver', 'simulate')
+    logger.info('获取支付驱动: driver=%s', driver_name)
 
     if driver_name == 'alipay':
         app_id = SystemSetting.get('alipay_app_id', '')
@@ -86,6 +96,8 @@ def get_payment_driver(request=None):
         notify_url = ''
         if request:
             notify_url = request.build_absolute_uri('/api/auth/payment/notify/')
+        masked = (app_id[:6] + '***') if app_id else ''
+        logger.info('支付宝驱动初始化: app_id=%s notify_url=%s', masked, notify_url)
         return AlipayDriver(
             app_id=app_id,
             private_key=private_key,

@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, mixins, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,6 +17,8 @@ from nodes.ssh_utils import deploy_v2ray
 from plans.models import Plan
 from plans.serializers import PlanSerializer
 from invite.models import Referral, SystemSetting
+
+logger = logging.getLogger('business')
 
 
 class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -79,6 +82,8 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         data = UserProfileSerializer(user).data
         if sync_results:
             data["sync_results"] = sync_results
+        logger.info('管理员更新用户: admin_id=%s target_user_id=%s fields=%s',
+                     request.user.id, user.id, list(request.data.keys()))
         return Response(data)
 
     @action(detail=True, methods=['post'])
@@ -94,6 +99,8 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         wallet, _ = Wallet.objects.get_or_create(user=user)
         wallet.balance += amount
         wallet.save()
+        logger.info('管理员手动充值: admin_id=%s target_user_id=%s amount=%s',
+                     request.user.id, user.id, amount)
         return Response({
             'success': True,
             'message': f'已为 {user.username} 充值 ¥{amount/100:.2f}',
@@ -121,6 +128,8 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
                 if err:
                     sync_errors.append({"node": node.name, "error": err})
 
+        logger.info('管理员重置订阅: admin_id=%s target_user_id=%s new_uuid=%s',
+                     request.user.id, user.id, new_uuid)
         return Response({
             'success': True,
             'message': f'订阅已失效，用户 {user.username} 的新 UUID 已同步到节点',
@@ -141,6 +150,8 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
                     "success": err is None,
                     "error": err or "",
                 })
+        logger.info('管理员同步节点配置: admin_id=%s target_user_id=%s',
+                     request.user.id, user.id)
         return Response({
             'success': True,
             'message': f'已向 {user.username} 关联的节点推送配置',
@@ -159,6 +170,8 @@ class AdminNodeViewSet(viewsets.ModelViewSet):
         if not node.ssh_key and not node.ssh_password:
             return Response({'success': False, 'error': f'节点 {node.name} 未配置 SSH 私钥或密码'}, status=400)
         r = deploy_v2ray(node)
+        logger.info('管理员部署节点: admin_id=%s node_id=%s node_name=%s success=%s',
+                     request.user.id, node.id, node.name, r.get('success'))
         return Response(r)
 
 
@@ -208,6 +221,8 @@ class AdminRechargeViewSet(viewsets.ReadOnlyModelViewSet):
         except Referral.DoesNotExist:
             pass
 
+        logger.info('管理员确认充值: admin_id=%s recharge_id=%s user_id=%s amount=%s',
+                     request.user.id, recharge.id, recharge.user_id, recharge.amount)
         return Response({'success': True, 'message': f'已确认 ¥{recharge.amount/100:.2f} 充值'})
 
     @action(detail=True, methods=['post'])
@@ -218,6 +233,8 @@ class AdminRechargeViewSet(viewsets.ReadOnlyModelViewSet):
         recharge.status = 'failed'
         recharge.admin_remark = request.data.get('remark', '管理员拒绝')
         recharge.save()
+        logger.info('管理员拒绝充值: admin_id=%s recharge_id=%s user_id=%s',
+                     request.user.id, recharge.id, recharge.user_id)
         return Response({'success': True, 'message': '已拒绝充值'})
 
 
@@ -250,6 +267,7 @@ class AdminPaymentQRView(APIView):
             config = PaymentConfig()
         config.qr_code = file
         config.save()
+        logger.info('管理员更新收款码: admin_id=%s', request.user.id)
         return Response({
             'success': True,
             'qr_url': request.build_absolute_uri(config.qr_code.url),
@@ -299,4 +317,5 @@ class AdminPaymentSettingsView(APIView):
                 continue
             SystemSetting.objects.update_or_create(key=key, defaults={'value': str(value)})
 
+        logger.info('管理员更新支付设置: admin_id=%s', request.user.id)
         return Response({'success': True})

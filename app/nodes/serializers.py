@@ -17,16 +17,10 @@ class NodeSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "protocol", "address", "port", "config",
                   "config_path", "reload_cmd", "sort_order", "is_active",
                   "ssh_host", "ssh_port", "ssh_user", "ssh_key", "ssh_password",
-                  "ssh_configured"]
+                  "ssh_configured", "deployed_at"]
         extra_kwargs = {
             "ssh_key": {"write_only": True},
             "ssh_password": {"write_only": True},
-            "ssh_host": {"write_only": True},
-            "ssh_port": {"write_only": True},
-            "ssh_user": {"write_only": True},
-            "config_path": {"write_only": True},
-            "reload_cmd": {"write_only": True},
-            "config": {"write_only": True},
         }
 
     def get_ssh_configured(self, obj) -> bool:

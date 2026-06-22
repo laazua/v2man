@@ -14,9 +14,15 @@ dist/
 .vscode/
 .idea/
 
+# app
+app/logs/
+app/media/
+app/v2ray-bin.zip
+
 # Node
 node_modules/
 web/dist/
+
 
 # OS
 .DS_Store

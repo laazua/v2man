@@ -1,4 +1,5 @@
 from django.db import models
+from config.fields import EncryptedCharField
 
 
 class Node(models.Model):
@@ -23,14 +24,15 @@ class Node(models.Model):
     is_active = models.BooleanField(default=True, db_index=True, verbose_name="启用")
     sort_order = models.IntegerField(default=0, verbose_name="排序")
     created_at = models.DateTimeField(auto_now_add=True)
+    deployed_at = models.DateTimeField(null=True, blank=True, verbose_name="最后部署时间")
 
     ssh_host = models.CharField(max_length=256, blank=True, verbose_name="SSH 地址")
     ssh_port = models.IntegerField(default=22, verbose_name="SSH 端口")
     ssh_user = models.CharField(max_length=64, default="root", verbose_name="SSH 用户")
     ssh_key = models.TextField(blank=True, verbose_name="SSH 私钥",
                                help_text="私钥认证，与密码二选一")
-    ssh_password = models.CharField(max_length=256, blank=True, verbose_name="SSH 密码",
-                                    help_text="密码认证，与私钥二选一")
+    ssh_password = EncryptedCharField(max_length=1024, blank=True, verbose_name="SSH 密码",
+                                      help_text="密码认证，与私钥二选一（自动加密存储）")
 
     class Meta:
         db_table = "nodes"

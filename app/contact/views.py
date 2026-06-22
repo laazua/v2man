@@ -1,3 +1,4 @@
+import logging
 from django.utils import timezone
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.decorators import action
@@ -5,6 +6,8 @@ from rest_framework.response import Response
 
 from .models import ContactMessage
 from .serializers import ContactMessageSerializer
+
+logger = logging.getLogger('business')
 
 
 class ContactMessageListCreateView(generics.ListCreateAPIView):
@@ -15,7 +18,8 @@ class ContactMessageListCreateView(generics.ListCreateAPIView):
         return ContactMessage.objects.filter(user=self.request.user, parent=None)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        instance = serializer.save(user=self.request.user)
+        logger.info('用户创建工单: user_id=%s message_id=%s', self.request.user.id, instance.id)
 
 
 class ContactMessageReplyView(generics.GenericAPIView):
@@ -40,6 +44,7 @@ class ContactMessageReplyView(generics.GenericAPIView):
         root.status = "pending"
         root.save(update_fields=["status"])
 
+        logger.info('用户回复工单: user_id=%s message_id=%s', request.user.id, root.id)
         return Response({"status": "ok"}, status=201)
 
 
@@ -84,6 +89,7 @@ class AdminContactViewSet(viewsets.ReadOnlyModelViewSet):
         root.replied_at = timezone.now()
         root.save(update_fields=["status", "replied_at"])
 
+        logger.info('管理员回复工单: admin_id=%s message_id=%s', request.user.id, root.id)
         return Response({"status": "ok", "replied_at": root.replied_at})
 
     @action(detail=True, methods=["post"])
