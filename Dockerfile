@@ -17,8 +17,8 @@ EXPOSE 8055
 
 RUN groupadd -r django && \
     useradd -m -r -g django django && \
-    mkdir -p /home/django/.cache && \
-    chown -R django:django /home/django/.cache
+    mkdir -p /home/django/.cache /app/logs /app/media /app/staticfiles && \
+    chown -R django:django /home/django/.cache /app/logs /app/media
 USER django
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
