@@ -210,7 +210,7 @@ onMounted(load)
 .reply-form { display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem; }
 .reply-form textarea { width: 100%; padding: 0.55rem 0.75rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); font-size: 0.875rem; resize: vertical; min-height: 60px; box-sizing: border-box; font-family: inherit; }
 .reply-form textarea:focus { outline: none; border-color: var(--accent); }
-.btn-primary { align-self: flex-start; padding: 0.5rem 1.25rem; border-radius: var(--radius); border: none; background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary { align-self: flex-start; padding: 0.5rem 1.25rem; border-radius: var(--radius); border: none; background: var(--accent-gradient); color: #fff; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,189,248,0.3); }
 </style>

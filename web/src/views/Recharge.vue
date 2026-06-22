@@ -2,6 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../api'
 
+interface RechargeRecord {
+  id: number; amount: number; status: string; admin_remark: string; created_at: string; confirmed_at: string | null
+}
+
 const mode = ref<'manual' | 'auto'>('manual')
 const amount = ref(0)
 const loading = ref(false)
@@ -13,6 +17,9 @@ const qrImageUrl = computed(() => `/api/auth/payment/qr-image/?t=${Date.now()}`)
 const currentOrder = ref<any>(null)
 const step = ref<'form' | 'paying' | 'done'>('form')
 const alipayQrCode = ref('')
+
+// Recharge history
+const history = ref<RechargeRecord[]>([])
 
 function isSimulateDriver() {
   return currentOrder.value && !currentOrder.value.qr_code
@@ -33,7 +40,25 @@ onMounted(async () => {
       hasQr.value = false
     }
   }
+  loadHistory()
 })
+
+async function loadHistory() {
+  try {
+    const { data } = await api.get('/auth/recharge/')
+    history.value = Array.isArray(data) ? data : []
+  } catch {
+    history.value = []
+  }
+}
+
+function statusLabel(s: string) {
+  return { pending: '待确认', completed: '已完成', failed: '已拒绝' }[s] || s
+}
+
+function formatAmount(cents: number) {
+  return `¥${(cents / 100).toFixed(2)}`
+}
 
 // --- Manual mode ---
 async function submitRecharge() {
@@ -183,6 +208,23 @@ function resetAuto() {
         </div>
       </template>
 
+      <!-- ============ 充值记录 ============ -->
+      <div class="history-section" v-if="history.length">
+        <h3>充值记录</h3>
+        <div class="history-list">
+          <div v-for="r in history" :key="r.id" class="history-item">
+            <div class="history-left">
+              <span class="history-amount">{{ formatAmount(r.amount) }}</span>
+              <span :class="['history-status', r.status]">{{ statusLabel(r.status) }}</span>
+            </div>
+            <div class="history-right">
+              <span class="history-time">{{ new Date(r.created_at).toLocaleDateString('zh-CN') }}</span>
+              <span v-if="r.status === 'failed' && r.admin_remark" class="history-remark">{{ r.admin_remark }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -231,4 +273,19 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .done-icon { margin-bottom: 1rem; }
 .done-text { font-size: 1.1rem; font-weight: 500; color: var(--success); margin-bottom: 1.25rem; }
 .btn-again { max-width: 200px; margin: 0 auto; }
+
+/* 充值记录 */
+.history-section { background: var(--bg-card); backdrop-filter: blur(12px); padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); }
+.history-section h3 { margin: 0 0 0.75rem; font-size: 1rem; }
+.history-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; background: var(--bg-primary); border-radius: 6px; border: 1px solid var(--border); }
+.history-left { display: flex; align-items: center; gap: 0.5rem; }
+.history-amount { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.history-status { padding: 0.125rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+.history-status.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+.history-status.completed { background: rgba(34,197,94,0.15); color: var(--success); }
+.history-status.failed { background: rgba(239,68,68,0.15); color: var(--danger); }
+.history-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+.history-time { font-size: 0.7rem; color: var(--text-muted); }
+.history-remark { font-size: 0.7rem; color: var(--danger); max-width: 180px; text-align: right; line-height: 1.3; }
 </style>

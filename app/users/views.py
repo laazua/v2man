@@ -68,6 +68,11 @@ class ProfileView(APIView):
 
 
 class RechargeView(APIView):
+    def get(self, request):
+        recharges = Recharge.objects.filter(user=request.user).order_by('-created_at')
+        from .serializers import RechargeSerializer
+        return Response(RechargeSerializer(recharges, many=True).data)
+
     def post(self, request):
         if Recharge.objects.filter(user=request.user, status='pending').exists():
             return Response({'error': '请扫码付款，如果付款未到账，联系管理员进行处理'}, status=400)
