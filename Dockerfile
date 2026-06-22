@@ -9,12 +9,16 @@ RUN uv sync --frozen
 
 COPY app/ .
 
-RUN uv run manage.py collectstatic --noinput
+RUN uv run manage.py collectstatic --noinput && \
+    chmod -R a+rX /app
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8055
 
-RUN groupadd -r django && useradd -r -g django django
+RUN groupadd -r django && \
+    useradd -m -r -g django django && \
+    mkdir -p /home/django/.cache && \
+    chown -R django:django /home/django/.cache
 USER django
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

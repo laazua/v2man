@@ -12,6 +12,8 @@ wheels/
 # 配置文件
 .env
 
+logs/
+media/payment/
 # sqlite3 数据库文件
 *.db
 *.sqlite3

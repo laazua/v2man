@@ -16,7 +16,7 @@ dist/
 
 # app
 app/logs/
-app/media/
+app/media/payment/
 app/v2ray-bin.zip
 
 # Node
