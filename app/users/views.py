@@ -10,8 +10,9 @@ from rest_framework.views import APIView
 from .serializers import RegisterSerializer, UserProfileSerializer
 from .models import User
 from nodes.subscription import Subscription
-from .wallet import Recharge, PaymentConfig
-from invite.models import InviteCode, Referral
+from .wallet import Recharge, PaymentConfig, PaymentOrder, Wallet
+from invite.models import InviteCode, Referral, SystemSetting
+from payment.drivers import get_payment_driver
 
 
 class RegisterView(generics.CreateAPIView):
@@ -67,6 +68,8 @@ class ProfileView(APIView):
 
 class RechargeView(APIView):
     def post(self, request):
+        if Recharge.objects.filter(user=request.user, status='pending').exists():
+            return Response({'error': '请扫码付款，如果付款未到账，联系管理员进行处理'}, status=400)
         amount = request.data.get('amount', 0)
         try:
             amount = int(amount)
@@ -76,6 +79,97 @@ class RechargeView(APIView):
             return Response({'error': '金额必须大于0'}, status=status.HTTP_400_BAD_REQUEST)
         Recharge.objects.create(user=request.user, amount=amount)
         return Response({'success': True, 'message': '充值已提交，等待管理员确认'})
+
+
+class PaymentModeView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        mode = SystemSetting.get('recharge_mode', 'manual')
+        return Response({'recharge_mode': mode})
+
+
+class PaymentCreateView(APIView):
+    def post(self, request):
+        mode = SystemSetting.get('recharge_mode', 'manual')
+        if mode != 'auto':
+            return Response({'error': '当前为手动充值模式'}, status=400)
+
+        amount = request.data.get('amount', 0)
+        try:
+            amount = int(amount)
+        except (ValueError, TypeError):
+            return Response({'error': '无效金额'}, status=400)
+        if amount < 1:
+            return Response({'error': '金额必须大于0'}, status=400)
+
+        import time
+        import secrets
+        out_trade_no = f'PAY{int(time.time())}{secrets.token_hex(4).upper()}'
+
+        driver = get_payment_driver(request)
+        try:
+            result = driver.create_order(request, request.user, amount, out_trade_no)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        order = PaymentOrder.objects.create(
+            user=request.user,
+            amount=amount,
+            out_trade_no=out_trade_no,
+        )
+
+        from .serializers import PaymentOrderSerializer
+        data = PaymentOrderSerializer(order).data
+        data.update(result)
+        return Response(data, status=201)
+
+
+class PaymentNotifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        driver = get_payment_driver(request)
+        verified = driver.verify_notification(request)
+        if not verified:
+            return Response({'error': '验签失败'}, status=400)
+
+        out_trade_no = verified['out_trade_no']
+        trade_no = verified['trade_no']
+        try:
+            order = PaymentOrder.objects.get(out_trade_no=out_trade_no, status='pending')
+        except PaymentOrder.DoesNotExist:
+            return Response({'error': '订单不存在或已处理'}, status=400)
+
+        return self._complete(order, trade_no)
+
+    def _complete(self, order, trade_no):
+        from django.utils import timezone
+        order.status = 'paid'
+        order.trade_no = trade_no
+        order.paid_at = timezone.now()
+        order.save()
+
+        Recharge.objects.create(
+            user=order.user,
+            amount=order.amount,
+            status='completed',
+            confirmed_at=order.paid_at,
+            admin_remark=f'支付宝自动到账 [{trade_no}]',
+        )
+
+        wallet, _ = Wallet.objects.get_or_create(user=order.user)
+        wallet.balance += order.amount
+        wallet.save()
+
+        return Response({'success': True, 'message': f'已到账 ¥{order.amount / 100:.2f}'})
+
+
+class PaymentOrderListView(APIView):
+    def get(self, request):
+        from .serializers import PaymentOrderSerializer
+        orders = PaymentOrder.objects.filter(user=request.user)
+        return Response(PaymentOrderSerializer(orders, many=True).data)
 
 
 class PaymentQRPublicView(APIView):

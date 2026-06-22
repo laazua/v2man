@@ -15,4 +15,6 @@ dependencies = [
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.2",
     "pillow>=11.0.0",
+    "apscheduler>=3.10.4",
+    "alipay-sdk-python>=3.7.1160",
 ]

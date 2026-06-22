@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -51,3 +52,28 @@ class Recharge(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user} ¥{self.amount / 100:.2f} ({self.status})'
+
+
+class PaymentOrder(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '待支付'),
+        ('paid', '已支付'),
+        ('closed', '已关闭'),
+    ]
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payment_orders'
+    )
+    amount = models.BigIntegerField(verbose_name='金额(分)')
+    out_trade_no = models.CharField(max_length=64, unique=True, verbose_name='商户订单号')
+    trade_no = models.CharField(max_length=64, blank=True, default='', verbose_name='支付宝交易号')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='pending', db_index=True, verbose_name='状态')
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name='支付时间')
+
+    class Meta:
+        db_table = 'payment_orders'
+        verbose_name = '支付订单'
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'{self.out_trade_no} ¥{self.amount / 100:.2f} ({self.status})'

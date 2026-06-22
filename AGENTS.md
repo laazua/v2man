@@ -53,6 +53,7 @@ uv run manage.py makemigrations         # 生成迁移
 uv run manage.py migrate                # 执行迁移
 uv run manage.py createsuperuser        # 创建管理员
 uv run manage.py check_expired          # 检查到期用户并停用
+uv run manage.py run_scheduler          # 后台调度器（每5min采集流量/15min同步用户/6h检查到期）
 
 # 前端
 cd web
@@ -68,7 +69,13 @@ npm run build                           # 构建生产版本
 | POST | `/api/auth/refresh/` | 刷新 Token |
 | POST | `/api/auth/register/` | 注册（自动创建钱包 + 订阅） |
 | GET | `/api/auth/profile/` | 当前用户信息（含余额、订阅token） |
-| POST | `/api/auth/recharge/` | 提交充值申请 |
+| POST | `/api/auth/recharge/` | 提交充值申请（手动模式） |
+| GET | `/api/auth/payment/mode/` | 查询当前充值模式（manual/auto） |
+| POST | `/api/auth/payment/create/` | 创建支付订单（自动模式） |
+| POST | `/api/auth/payment/notify/` | 支付回调（模拟/支付宝） |
+| GET | `/api/auth/payment/orders/` | 用户支付订单列表 |
+| GET | `/api/admin/payment/settings/` | 管理员获取充值模式 + 支付宝配置 |
+| POST | `/api/admin/payment/settings/` | 管理员保存充值模式 + 支付宝配置 |
 | GET | `/api/plans/` | 套餐列表（公开） |
 | POST | `/api/plans/purchase/<id>/` | 扣余额购买套餐 |
 | GET | `/api/nodes/` | 节点列表（公开） |
@@ -82,7 +89,7 @@ npm run build                           # 构建生产版本
 ## 核心业务流程
 
 1. **注册** → 自动创建 Wallet + Subscription
-2. **充值** → 用户提交申请 → 管理员在 Admin 确认到账 → 余额增加
+2. **充值** → 用户提交申请（手动模式下管理员确认到账，自动模式下支付宝回调自动到账）→ 余额增加
 3. **购买套餐** → 选择套餐 → 扣余额 → 更新 plan/traffic/expire 字段
 4. **订阅** → 用户从面板复制订阅链接 → 导入 V2Ray/Clash/Sing-box 客户端
 5. **流量** → 管理员手动录入 → 自动累加到用户 traffic_used

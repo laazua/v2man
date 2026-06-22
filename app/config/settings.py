@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'invite',
     'notify',
     'contact',
+    'payment',
 ]
 
 MIDDLEWARE = [

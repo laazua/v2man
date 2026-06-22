@@ -34,6 +34,7 @@ const routes: RouteRecordRaw[] = [
           { path: 'notifications', name: 'AdminNotifications', component: () => import('../views/AdminNotifications.vue') },
           { path: 'contact', name: 'AdminContact', component: () => import('../views/AdminContact.vue') },
           { path: 'payment-qr', name: 'AdminPaymentQr', component: () => import('../views/AdminPaymentQr.vue') },
+          { path: 'payment-settings', name: 'AdminPaymentSettings', component: () => import('../views/AdminPaymentSettings.vue') },
         ],
       },
     ],

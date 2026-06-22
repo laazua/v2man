@@ -12,4 +12,8 @@ urlpatterns = [
     path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('payment/qr/', views.PaymentQRPublicView.as_view(), name='payment-qr'),
     path('payment/qr-image/', views.PaymentQRImageView.as_view(), name='payment-qr-image'),
+    path('payment/mode/', views.PaymentModeView.as_view(), name='payment-mode'),
+    path('payment/create/', views.PaymentCreateView.as_view(), name='payment-create'),
+    path('payment/notify/', views.PaymentNotifyView.as_view(), name='payment-notify'),
+    path('payment/orders/', views.PaymentOrderListView.as_view(), name='payment-orders'),
 ]

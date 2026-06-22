@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import User
-from .wallet import Recharge
+from .wallet import Recharge, PaymentOrder
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -38,3 +38,10 @@ class RechargeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recharge
         fields = ['id', 'user', 'username', 'amount', 'status', 'admin_remark', 'created_at', 'confirmed_at']
+
+
+class PaymentOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentOrder
+        fields = ['id', 'amount', 'out_trade_no', 'trade_no', 'status', 'created_at', 'paid_at']
+        read_only_fields = ['id', 'out_trade_no', 'trade_no', 'status', 'created_at', 'paid_at']

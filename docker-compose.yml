@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8055:8055"
     env_file:
       - app/.env
       - path: app/.env.production

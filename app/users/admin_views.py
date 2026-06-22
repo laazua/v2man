@@ -255,3 +255,48 @@ class AdminPaymentQRView(APIView):
             'qr_url': request.build_absolute_uri(config.qr_code.url),
             'message': '收款码已更新',
         })
+
+
+class AdminPaymentSettingsView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        return Response({
+            'recharge_mode': SystemSetting.get('recharge_mode', 'manual'),
+            'payment_driver': SystemSetting.get('payment_driver', 'simulate'),
+            'alipay_app_id': SystemSetting.get('alipay_app_id', ''),
+            'alipay_private_key': SystemSetting.get('alipay_private_key', ''),
+            'alipay_public_key': SystemSetting.get('alipay_public_key', ''),
+            'notify_url': request.build_absolute_uri('/api/auth/payment/notify/'),
+        })
+
+    def post(self, request):
+        recharge_mode = request.data.get('recharge_mode', 'manual')
+        payment_driver = request.data.get('payment_driver', 'simulate')
+
+        if recharge_mode not in ('manual', 'auto'):
+            return Response({'error': '无效充值模式'}, status=400)
+        if payment_driver not in ('simulate', 'alipay'):
+            return Response({'error': '无效支付驱动'}, status=400)
+
+        if recharge_mode == 'auto' and payment_driver == 'alipay':
+            app_id = request.data.get('alipay_app_id', '')
+            private_key = request.data.get('alipay_private_key', '')
+            public_key = request.data.get('alipay_public_key', '')
+            if not app_id:
+                return Response({'error': '启用支付宝驱动请输入 APPID'}, status=400)
+            if not private_key or 'BEGIN RSA PRIVATE KEY' not in private_key:
+                return Response({'error': '应用私钥格式错误，需包含 -----BEGIN RSA PRIVATE KEY-----'}, status=400)
+            if not public_key or 'BEGIN PUBLIC KEY' not in public_key:
+                return Response({'error': '支付宝公钥格式错误，需包含 -----BEGIN PUBLIC KEY-----'}, status=400)
+
+        valid_keys = {
+            'recharge_mode', 'payment_driver', 'alipay_app_id',
+            'alipay_private_key', 'alipay_public_key',
+        }
+        for key, value in request.data.items():
+            if key not in valid_keys:
+                continue
+            SystemSetting.objects.update_or_create(key=key, defaults={'value': str(value)})
+
+        return Response({'success': True})
