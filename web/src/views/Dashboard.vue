@@ -10,9 +10,20 @@ function formatMB(mb: number): string {
   return `${mb} MB`
 }
 
-function trafficPercent(): number {
+function trafficPercent(): string {
+  if (!profile.traffic_total) return '0'
+  const pct = (profile.traffic_used / profile.traffic_total) * 100
+  if (pct <= 0) return '0'
+  if (pct < 0.1) return '< 1'
+  return Math.min(100, Math.round(pct)).toString()
+}
+
+function trafficWidth(): number {
   if (!profile.traffic_total) return 0
-  return Math.min(100, Math.round((profile.traffic_used / profile.traffic_total) * 100))
+  const pct = (profile.traffic_used / profile.traffic_total) * 100
+  if (pct <= 0) return 0
+  if (pct < 1) return 1
+  return Math.min(100, Math.round(pct))
 }
 
 function daysLeft(): number {
@@ -51,7 +62,7 @@ function daysLeft(): number {
           </div>
           <p class="card-value">{{ formatMB(profile.traffic_used) }} <span class="card-unit">/ {{ formatMB(profile.traffic_total) }}</span></p>
           <div class="fuel-gauge">
-            <div class="fuel-fill" :style="{ width: trafficPercent() + '%' }"></div>
+            <div class="fuel-fill" :style="{ width: trafficWidth() + '%' }"></div>
           </div>
           <span class="card-meta">{{ trafficPercent() }}% 已使用</span>
         </div>

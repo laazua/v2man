@@ -55,6 +55,15 @@ class Command(BaseCommand):
                 if total_bytes <= 0:
                     continue
 
+                from django.db.models import Sum
+                recent = TrafficLog.objects.filter(
+                    user=user, node_name=node.name,
+                    recorded_at__gte=now.replace(hour=0, minute=0, second=0, microsecond=0),
+                ).aggregate(u=Sum('upload_bytes'), d=Sum('download_bytes'))
+                if (recent['u'] or 0) >= uplink and (recent['d'] or 0) >= downlink:
+                    self.stdout.write(f"  跳过 {user.username}（当日已有相同或更大流量记录）")
+                    continue
+
                 TrafficLog.objects.create(
                     user=user,
                     upload_bytes=uplink,

@@ -48,16 +48,28 @@ class PurchaseView(APIView):
 
             sub, created = Subscription.objects.get_or_create(user=user)
 
-        # 同步用户 UUID 到关联节点（异步最佳，但先同步阻塞）
-        if plan.nodes.exists():
+            sync_errors = []
             try:
                 from nodes.ssh_utils import sync_users_to_node
                 for node in plan.nodes.filter(is_active=True):
                     err = sync_users_to_node(node)
                     if err:
-                        print(f"[purchase] sync {node.name} failed: {err}")
+                        sync_errors.append(f"{node.name}: {err}")
             except Exception as exc:
-                print(f"[purchase] sync error: {exc}")
+                sync_errors.append(str(exc))
+
+            if sync_errors and not is_admin:
+                wallet.balance += price_cents
+                wallet.save()
+                user.plan = None
+                user.traffic_total = 0
+                user.expire_date = None
+                user.save()
+                sub.delete()
+                return Response({
+                    'error': '节点同步失败，已自动退款',
+                    'sync_errors': sync_errors,
+                }, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response({
             'success': True,

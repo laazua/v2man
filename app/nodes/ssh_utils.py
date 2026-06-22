@@ -4,6 +4,7 @@ import os
 import io
 import re
 import uuid
+import shlex
 
 import paramiko
 
@@ -44,7 +45,7 @@ def _deploy_from_templates(node, vars_dict: dict[str, str]) -> str | None:
     if not os.path.isdir(_TEMPLATE_DIR):
         return None  # no templates, skip
 
-    _, _, code = ssh_exec(node, f"mkdir -p {node.config_path}")
+    _, _, code = ssh_exec(node, f"mkdir -p {_shell_quote(node.config_path)}")
     if code != 0:
         return "创建配置目录失败"
 
@@ -60,6 +61,12 @@ def _deploy_from_templates(node, vars_dict: dict[str, str]) -> str | None:
         if code != 0:
             return f"写入 {out_name} 失败"
     return None
+
+
+def _shell_quote(path: str) -> str:
+    if not path or ';' in path or '|' in path or '`' in path or '$' in path:
+        raise ValueError(f"路径包含非法字符: {path}")
+    return shlex.quote(path)
 
 
 def _connect(node) -> paramiko.SSHClient:
@@ -99,7 +106,8 @@ def ssh_exec(node, command: str, timeout: int = 30) -> tuple[str, str, int]:
 
 
 def ssh_write_file(node, remote_path: str, content: str) -> tuple[str, str, int]:
-    return ssh_exec(node, f"cat > {remote_path} << 'V2MANEOF'\n{content}\nV2MANEOF")
+    safe_path = _shell_quote(remote_path)
+    return ssh_exec(node, f"cat > {safe_path} << 'V2MANEOF'\n{content}\nV2MANEOF")
 
 
 def ssh_upload_binary(node, remote_path: str, data: bytes) -> tuple[str, str, int]:
@@ -129,7 +137,7 @@ def _restart_cmd(node) -> str:
 def sync_user_uuid(node, old_uuid: str, new_uuid: str) -> dict:
     result = {"node_id": node.id, "node_name": node.name, "success": False, "error": ""}
     try:
-        inb_path = _inbounds_path(node)
+        inb_path = _shell_quote(_inbounds_path(node))
         stdout, stderr, code = ssh_exec(
             node,
             f"sed -i 's/{old_uuid}/{new_uuid}/g' {inb_path} && "
@@ -149,7 +157,7 @@ def sync_user_uuid(node, old_uuid: str, new_uuid: str) -> dict:
 def refresh_node_config(node, user_uuid: str) -> dict:
     result = {"node_id": node.id, "node_name": node.name, "success": False, "uuid_found": False, "error": ""}
     try:
-        inb_path = _inbounds_path(node)
+        inb_path = _shell_quote(_inbounds_path(node))
         out, _, _ = ssh_exec(node, f"grep -q '{user_uuid}' {inb_path} 2>/dev/null && echo found || echo missing")
         result["uuid_found"] = "found" in out
 
@@ -211,7 +219,8 @@ def _patch_v2ray_service(node) -> str | None:
     """Ensure systemd ExecStart (both main file and drop-in) matches node.config_path.
     Returns error string on failure, None on success."""
     config_flag = "-d" if not node.config_path.endswith(".json") else "-config"
-    expected = f"ExecStart=/usr/local/bin/v2ray run {config_flag} {node.config_path}"
+    safe_cfg = _shell_quote(node.config_path)
+    expected = f"ExecStart=/usr/local/bin/v2ray run {config_flag} {safe_cfg}"
     drop_in = "/etc/systemd/system/v2ray.service.d/10-donot_touch_single_conf.conf"
     patched = False
 
@@ -452,7 +461,7 @@ def deploy_v2ray(node) -> dict:
                 result["error"] = "写入配置文件失败"
                 return result
         else:
-            _, _, code = ssh_exec(node, f"mkdir -p {node.config_path}")
+            _, _, code = ssh_exec(node, f"mkdir -p {_shell_quote(node.config_path)}")
             if code != 0:
                 result["error"] = "创建配置目录失败"
                 return result

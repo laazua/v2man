@@ -1,3 +1,4 @@
+import hashlib
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.conf import settings
@@ -129,18 +130,43 @@ class PaymentNotifyView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        from invite.models import SystemSetting
+        driver_name = SystemSetting.get('payment_driver', 'simulate')
+
+        xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        remote_ip = xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '')
+        import logging
+        logger = logging.getLogger(__name__)
+
+        if driver_name == 'simulate':
+            if not request.user.is_authenticated:
+                return Response({'error': '需要认证'}, status=401)
+            secret = request.data.get('secret', '')
+            expected = hashlib.sha256(
+                (settings.SECRET_KEY + 'payment_notify').encode()
+            ).hexdigest()[:16]
+            if secret != expected:
+                logger.warning(f'模拟支付回调密钥错误: ip={remote_ip}, user={request.user.id}')
+                return Response({'error': '无效的密钥'}, status=403)
+
         driver = get_payment_driver(request)
         verified = driver.verify_notification(request)
         if not verified:
+            logger.warning(f'支付回调验签失败: ip={remote_ip}, driver={driver_name}')
             return Response({'error': '验签失败'}, status=400)
 
         out_trade_no = verified['out_trade_no']
         trade_no = verified['trade_no']
+
         try:
             order = PaymentOrder.objects.get(out_trade_no=out_trade_no, status='pending')
         except PaymentOrder.DoesNotExist:
             return Response({'error': '订单不存在或已处理'}, status=400)
 
+        if driver_name == 'simulate' and order.user != request.user:
+            return Response({'error': '无权操作此订单'}, status=403)
+
+        logger.info(f'支付回调成功: order={out_trade_no}, ip={remote_ip}, driver={driver_name}')
         return self._complete(order, trade_no)
 
     def _complete(self, order, trade_no):
@@ -203,6 +229,7 @@ token_generator = PasswordResetTokenGenerator()
 
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = []  # set in urls.py
 
     def post(self, request):
         email = request.data.get('email', '')
@@ -244,18 +271,26 @@ class PasswordResetConfirmView(APIView):
         token = request.data.get('token', '')
         password = request.data.get('password', '')
 
-        if not password or len(password) < 6:
-            return Response({'error': '密码至少6位'}, status=status.HTTP_400_BAD_REQUEST)
+        cache_key = f'pwd_reset_confirm_{uid}'
+        attempts = cache.get(cache_key, 0)
+        if attempts >= 5:
+            return Response({'error': '尝试次数过多，请稍后再试'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        if not password or len(password) < 8:
+            return Response({'error': '密码至少8位'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             pk = force_str(urlsafe_base64_decode(uid))
             user = User.objects.get(pk=pk)
         except (User.DoesNotExist, ValueError, TypeError):
+            cache.set(cache_key, attempts + 1, 3600)
             return Response({'error': '无效的链接'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not token_generator.check_token(user, token):
+            cache.set(cache_key, attempts + 1, 3600)
             return Response({'error': '链接已过期或无效'}, status=status.HTTP_400_BAD_REQUEST)
 
+        cache.delete(cache_key)
         user.set_password(password)
         user.save()
         return Response({'success': True, 'message': '密码已重置，请重新登录'})

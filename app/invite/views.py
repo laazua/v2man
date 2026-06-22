@@ -90,7 +90,10 @@ class SettingsView(APIView):
         return Response(data)
 
     def put(self, request):
+        allowed_keys = {'referral_percentage', 'withdrawal_min'}
         for key, value in request.data.items():
+            if key not in allowed_keys:
+                return Response({'error': f'不允许的配置项: {key}'}, status=400)
             SystemSetting.objects.update_or_create(key=key, defaults={'value': str(value)})
         return Response({'success': True})
 

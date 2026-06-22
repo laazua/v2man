@@ -21,23 +21,38 @@ class WithdrawalAdmin(admin.ModelAdmin):
 
     def approve_withdrawals(self, request, queryset):
         from django.utils import timezone
+        from django.db import transaction
+        count = 0
         for w in queryset.filter(status=Withdrawal.PENDING):
-            w.status = Withdrawal.APPROVED
-            w.processed_at = timezone.now()
-            w.save()
-        self.message_user(request, f'已通过 {queryset.filter(status=Withdrawal.PENDING).count()} 个提现申请')
+            with transaction.atomic():
+                w = Withdrawal.objects.select_for_update().get(id=w.id)
+                if w.status != Withdrawal.PENDING:
+                    continue
+                w.status = Withdrawal.APPROVED
+                w.processed_at = timezone.now()
+                w.save()
+                count += 1
+        self.message_user(request, f'已通过 {count} 个提现申请')
     approve_withdrawals.short_description = '通过选中的提现申请'
 
     def reject_withdrawals(self, request, queryset):
         from django.utils import timezone
+        from django.db import transaction
+        from users.wallet import Wallet
+        count = 0
         for w in queryset.filter(status=Withdrawal.PENDING):
-            w.status = Withdrawal.REJECTED
-            w.processed_at = timezone.now()
-            from users.wallet import Wallet
-            wallet = Wallet.objects.get(user=w.user)
-            wallet.balance += w.amount
-            wallet.save()
-        self.message_user(request, f'已拒绝并退回金额')
+            with transaction.atomic():
+                w = Withdrawal.objects.select_for_update().get(id=w.id)
+                if w.status != Withdrawal.PENDING:
+                    continue
+                w.status = Withdrawal.REJECTED
+                w.processed_at = timezone.now()
+                wallet = Wallet.objects.get(user=w.user)
+                wallet.balance += w.amount
+                wallet.save()
+                w.save()
+                count += 1
+        self.message_user(request, f'已拒绝并退回 {count} 笔金额')
     reject_withdrawals.short_description = '拒绝并退回金额'
 
 

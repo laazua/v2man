@@ -4,7 +4,7 @@ from .wallet import Recharge, PaymentOrder
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
     invite_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
