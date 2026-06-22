@@ -3,9 +3,6 @@ import { ref, onMounted } from 'vue'
 import api from '../api'
 import type { Node } from '../types'
 import { profile } from '../api/profile'
-import { getSubscribeBaseUrl } from '../api/subscribe'
-
-const origin = getSubscribeBaseUrl()
 const nodes = ref<Node[]>([])
 const loading = ref(true)
 

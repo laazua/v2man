@@ -67,7 +67,7 @@ onMounted(load)
         <div class="w-info">
           <strong>{{ w.username }}</strong>
           <span>¥{{ (w.amount / 100).toFixed(2) }}</span>
-          <span :class="['status-badge', w.status]">{{ { pending: '待审核', approved: '已通过', rejected: '已拒绝' }[w.status] || w.status }}</span>
+          <span :class="['status-badge', w.status]">{{ ({ pending: '待审核', approved: '已通过', rejected: '已拒绝' } as Record<string, string>)[w.status] || w.status }}</span>
           <span class="date">{{ new Date(w.created_at).toLocaleDateString('zh-CN') }}</span>
         </div>
         <div v-if="w.status === 'pending'" class="w-actions">

@@ -21,10 +21,6 @@ const alipayQrCode = ref('')
 // Recharge history
 const history = ref<RechargeRecord[]>([])
 
-function isSimulateDriver() {
-  return currentOrder.value && !currentOrder.value.qr_code
-}
-
 onMounted(async () => {
   try {
     const { data } = await api.get('/payment/mode/')

@@ -27,7 +27,6 @@ const filter = ref<'all' | 'pending' | 'replied'>('all')
 const selected = ref<Conversation | null>(null)
 const replyText = ref('')
 const replySending = ref(false)
-const replyInput = ref<HTMLTextAreaElement | null>(null)
 
 const filtered = computed(() => {
   if (filter.value === 'all') return conversations.value

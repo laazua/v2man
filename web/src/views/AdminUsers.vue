@@ -4,7 +4,7 @@ import api from '../api'
 import { copyText, copiedKey } from '../api/copy'
 
 interface User {
-  id: number; username: string; email: string; plan_name: string | null; traffic_used: number; traffic_total: number; expire_date: string | null; is_active?: boolean; balance?: number
+  id: number; username: string; email: string; uuid: string; plan_name: string | null; traffic_used: number; traffic_total: number; expire_date: string | null; is_active?: boolean; balance?: number
 }
 
 interface Plan {
