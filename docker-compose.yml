@@ -3,11 +3,39 @@ services:
     build: .
     ports:
       - "8000:8000"
-    env_file: app/.env
+    env_file:
+      - app/.env
+      - path: app/.env.production
+        required: false
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - static:/app/staticfiles
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static:/app/staticfiles:ro
+      - dist:/app/web/dist:ro
+    depends_on:
+      - web
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    env_file:
+      - app/.env
+      - path: app/.env.production
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:16-alpine
     environment:
@@ -16,6 +44,13 @@ services:
       POSTGRES_PASSWORD: v2man
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U v2man -d v2man"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pgdata:
   static:
+  dist:

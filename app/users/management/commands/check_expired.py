@@ -16,5 +16,6 @@ class Command(BaseCommand):
             traffic_used=0,
             traffic_total=0,
             plan=None,
+            is_active=False,
         )
         self.stdout.write(self.style.SUCCESS(f'已重置 {count} 个到期用户的流量和套餐'))

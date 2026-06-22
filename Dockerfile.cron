@@ -1,0 +1,18 @@
+FROM python:3.13-slim
+
+RUN pip install uv
+
+RUN apt-get update && apt-get install -y --no-install-recommends cron && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY app/pyproject.toml app/uv.lock ./
+RUN uv sync --frozen
+
+COPY app/ .
+
+RUN echo "*/5 * * * * root cd /app && uv run manage.py collect_traffic >> /var/log/cron.log 2>&1" > /etc/cron.d/v2man-traffic
+RUN echo "*/15 * * * * root cd /app && uv run manage.py sync_users >> /var/log/cron.log 2>&1" >> /etc/cron.d/v2man-traffic
+RUN echo "0 */6 * * * root cd /app && uv run manage.py check_expired >> /var/log/cron.log 2>&1" >> /etc/cron.d/v2man-traffic
+
+CMD ["cron", "-f", "-L", "/var/log/cron.log"]

@@ -42,13 +42,22 @@ class PurchaseView(APIView):
                 wallet.save()
 
             user.plan = plan
-            user.traffic_used = 0
-            user.traffic_total = plan.traffic_limit if plan.traffic_limit > 0 else 0
+            user.traffic_total = plan.traffic_limit if plan.traffic_limit > 0 else -1
             user.expire_date = timezone.now() + timezone.timedelta(days=plan.duration_days)
             user.save()
 
-            Subscription.objects.filter(user=user).delete()
-            sub = Subscription.objects.create(user=user)
+            sub, created = Subscription.objects.get_or_create(user=user)
+
+        # 同步用户 UUID 到关联节点（异步最佳，但先同步阻塞）
+        if plan.nodes.exists():
+            try:
+                from nodes.ssh_utils import sync_users_to_node
+                for node in plan.nodes.filter(is_active=True):
+                    err = sync_users_to_node(node)
+                    if err:
+                        print(f"[purchase] sync {node.name} failed: {err}")
+            except Exception as exc:
+                print(f"[purchase] sync error: {exc}")
 
         return Response({
             'success': True,

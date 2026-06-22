@@ -33,9 +33,7 @@ async function upload() {
   const formData = new FormData()
   formData.append('qr_code', selectedFile.value)
   try {
-    await api.post('/admin/payment/qr/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    await api.post('/admin/payment/qr/', formData)
     message.value = '收款码已更新'
     hasQr.value = true
     refreshKey.value++

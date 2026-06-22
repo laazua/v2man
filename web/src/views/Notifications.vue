@@ -10,8 +10,7 @@ const loading = ref(true)
 onMounted(async () => {
   try {
     const { data } = await api.get('/notifications/')
-    notifications.value = data
-    await api.post('/notifications/mark-read/')
+    notifications.value = Array.isArray(data) ? data : data.results
   } catch {
     // fail silently
   } finally {

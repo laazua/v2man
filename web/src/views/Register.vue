@@ -26,12 +26,16 @@ async function register() {
     }
     if (inviteCode.value) payload.invite_code = inviteCode.value
     await api.post('/auth/register/', payload)
-    const { data } = await api.post('/auth/login/', {
-      username: username.value,
-      password: password.value,
-    })
-    setTokens(data.access, data.refresh)
-    router.push('/')
+    try {
+      const { data } = await api.post('/auth/login/', {
+        username: username.value,
+        password: password.value,
+      })
+      setTokens(data.access, data.refresh)
+      router.push('/')
+    } catch {
+      error.value = '注册成功，请前往登录'
+    }
   } catch (e: any) {
     error.value = e.response?.data?.message || '注册失败，请重试'
   } finally {

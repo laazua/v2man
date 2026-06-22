@@ -6,7 +6,7 @@ const amount = ref(0)
 const loading = ref(false)
 const message = ref('')
 const hasQr = ref(false)
-const qrImageUrl = computed(() => '/api/auth/payment/qr-image/')
+const qrImageUrl = computed(() => `/api/auth/payment/qr-image/?t=${Date.now()}`)
 
 onMounted(async () => {
   try {

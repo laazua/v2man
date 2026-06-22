@@ -12,7 +12,7 @@ from .permissions import IsAdminUser
 from nodes.models import Node
 from nodes.serializers import NodeSerializer
 from nodes.subscription import Subscription
-from nodes.ssh_utils import refresh_node_config, deploy_v2ray
+from nodes.ssh_utils import deploy_v2ray
 from plans.models import Plan
 from plans.serializers import PlanSerializer
 from invite.models import Referral, SystemSetting
@@ -35,10 +35,13 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         password = request.data.get('password')
 
         if plan_id is not None:
-            try:
-                user.plan = Plan.objects.get(id=plan_id)
-            except Plan.DoesNotExist:
-                return Response({'error': '套餐不存在'}, status=400)
+            if str(plan_id) in ("0", "", "null"):
+                user.plan = None
+            else:
+                try:
+                    user.plan = Plan.objects.get(id=int(plan_id))
+                except (Plan.DoesNotExist, ValueError, TypeError):
+                    return Response({'error': '套餐不存在'}, status=400)
         if traffic_used is not None:
             try:
                 user.traffic_used = int(traffic_used)
@@ -63,7 +66,20 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         if password:
             user.set_password(password)
         user.save()
-        return Response(UserProfileSerializer(user).data)
+
+        # 如果修改了影响节点配置的字段，同步到节点
+        sync_results = None
+        if any(k in request.data for k in ("plan_id", "is_active", "expire_date")):
+            from nodes.ssh_utils import sync_users_to_node
+            sync_results = []
+            for node in Node.objects.filter(is_active=True):
+                err = sync_users_to_node(node)
+                sync_results.append({"node": node.name, "success": err is None, "error": err or ""})
+
+        data = UserProfileSerializer(user).data
+        if sync_results:
+            data["sync_results"] = sync_results
+        return Response(data)
 
     @action(detail=True, methods=['post'])
     def top_up(self, request, pk=None):
@@ -97,22 +113,34 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         except Subscription.DoesNotExist:
             pass
 
+        sync_errors = []
+        if user.plan:
+            from nodes.ssh_utils import sync_users_to_node
+            for node in user.plan.nodes.filter(is_active=True):
+                err = sync_users_to_node(node)
+                if err:
+                    sync_errors.append({"node": node.name, "error": err})
+
         return Response({
             'success': True,
-            'message': f'订阅已失效，用户 {user.username} 的新 UUID 已生成',
+            'message': f'订阅已失效，用户 {user.username} 的新 UUID 已同步到节点',
             'new_uuid': str(new_uuid),
+            'sync_errors': sync_errors if sync_errors else None,
         })
 
     @action(detail=True, methods=['post'])
     def sync_config(self, request, pk=None):
         user = self.get_object()
-        current_uuid = str(user.uuid)
         sync_results = []
         if user.plan:
+            from nodes.ssh_utils import sync_users_to_node
             for node in user.plan.nodes.filter(is_active=True):
-                if node.ssh_key or node.ssh_password:
-                    r = refresh_node_config(node, current_uuid)
-                    sync_results.append(r)
+                err = sync_users_to_node(node)
+                sync_results.append({
+                    "node": node.name,
+                    "success": err is None,
+                    "error": err or "",
+                })
         return Response({
             'success': True,
             'message': f'已向 {user.username} 关联的节点推送配置',
@@ -144,6 +172,16 @@ class AdminRechargeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Recharge.objects.all().select_related('user')
     serializer_class = RechargeSerializer
     permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user_id = self.request.query_params.get('user_id')
+        username = self.request.query_params.get('username')
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if username:
+            qs = qs.filter(user__username__icontains=username)
+        return qs
 
     @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):

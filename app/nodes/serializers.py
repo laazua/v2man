@@ -12,8 +12,8 @@ class NodeSerializer(serializers.ModelSerializer):
                   "ssh_host", "ssh_port", "ssh_user", "ssh_key", "ssh_password",
                   "ssh_configured"]
         extra_kwargs = {
-            "ssh_key": {"write_only": True, "required": False, "allow_blank": True},
-            "ssh_password": {"write_only": True, "required": False, "allow_blank": True},
+            "ssh_key": {"write_only": True},
+            "ssh_password": {"write_only": True},
         }
 
     def get_ssh_configured(self, obj) -> bool:

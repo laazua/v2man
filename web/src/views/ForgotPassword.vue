@@ -8,7 +8,7 @@ const route = useRoute()
 const router = useRouter()
 const siteName = useSiteName()
 
-const step = ref(route.query.uid ? 'reset' : 'email')
+const step = ref((route.name === 'ResetPassword' && !route.query.uid) ? 'invalid' : route.query.uid ? 'reset' : 'email')
 const email = ref('')
 const password = ref('')
 const confirmPwd = ref('')
@@ -73,7 +73,12 @@ async function confirmReset() {
         <p class="link"><router-link to="/login">返回登录</router-link></p>
       </div>
 
-      <div v-if="step === 'reset'">
+      <div v-if="step === 'invalid'">
+        <p class="error">无效的重置链接，请重新申请。</p>
+        <p class="link"><router-link to="/forgot-password">重新申请</router-link></p>
+      </div>
+
+      <div v-else-if="step === 'reset'">
         <div class="form-group">
           <label>新密码</label>
           <div class="pwd-wrap">

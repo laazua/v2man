@@ -17,6 +17,7 @@ const editing = ref<User | null>(null)
 const editForm = ref({ plan_id: '', email: '', password: '', traffic_used: 0, traffic_total: 0, is_active: true, expire_date: '' })
 const showEdit = ref(false)
 const showPwd = ref(false)
+const editError = ref('')
 
 const topUpUser = ref<User | null>(null)
 const topUpAmount = ref(0)
@@ -55,6 +56,7 @@ onMounted(async () => {
 })
 
 function openEdit(u: User) {
+  editError.value = ''
   editing.value = u
   editForm.value = {
     plan_id: '',
@@ -79,12 +81,12 @@ async function saveEdit() {
   if (editForm.value.password) payload.password = editForm.value.password
 
   try {
-    await api.patch(`/admin/users/${editing.value!.id}/update_user/`, payload)
+    await api.patch(`/admin/users/${editing.value!.id}/`, payload)
     showEdit.value = false
     const { data } = await api.get('/admin/users/')
     users.value = data
-  } catch {
-    // keep modal open, user can retry
+  } catch (e: any) {
+    editError.value = e.response?.data?.error || e.response?.data?.detail || '保存失败'
   }
 }
 
@@ -159,6 +161,7 @@ async function syncConfig(u: User) {
           <label>总流量 (MB) <input v-model.number="editForm.traffic_total" type="number" /></label>
           <label>到期时间 <input v-model="editForm.expire_date" type="datetime-local" /></label>
         </div>
+        <p v-if="editError" class="error">{{ editError }}</p>
         <div class="form-actions">
           <button @click="showEdit = false" class="btn-secondary">取消</button>
           <button @click="saveEdit" class="btn-primary">保存</button>

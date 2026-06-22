@@ -16,7 +16,7 @@ class Node(models.Model):
     port = models.IntegerField(verbose_name="端口")
     config = models.JSONField(default=dict, blank=True, verbose_name="协议配置",
                               help_text="各协议的专属配置，如 flow/encryption/obfs 等")
-    config_path = models.CharField(max_length=512, default="/etc/v2ray/config.json", verbose_name="V2Ray 配置路径",
+    config_path = models.CharField(max_length=512, default="/usr/local/etc/v2ray/config.json", verbose_name="V2Ray 配置路径",
                                    help_text="配置文件路径或配置目录路径，如 /etc/v2ray/configs/")
     reload_cmd = models.CharField(max_length=256, default="systemctl restart v2ray", verbose_name="重载命令",
                                    help_text="重载 V2Ray 的命令，如 systemctl restart v2ray / v2ray -d <目录> 等")

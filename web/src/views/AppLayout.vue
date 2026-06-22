@@ -125,10 +125,6 @@ watch(() => router.currentRoute.value.path, () => {
   fetchUnread()
 })
 
-onBeforeUnmount(() => {
-  if (pollTimer) clearInterval(pollTimer)
-})
-
 function toggleTheme() {
   isDark.value = !isDark.value
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')

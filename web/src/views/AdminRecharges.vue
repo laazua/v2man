@@ -1,18 +1,35 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '../api'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Recharge {
-  id: number; user: number; user_name?: string; amount: number; status: string; created_at: string; confirmed_at: string | null
+  id: number; user: number; username?: string; amount: number; status: string; created_at: string; confirmed_at: string | null
 }
 
 const recharges = ref<Recharge[]>([])
 const filter = ref('pending')
+const search = ref('')
+const route = useRoute()
+const router = useRouter()
 
-onMounted(() => load())
+onMounted(() => {
+  if (route.query.username) {
+    search.value = route.query.username as string
+  }
+  load()
+})
+
+watch(search, () => {
+  const query = search.value ? { username: search.value } : {}
+  router.replace({ query })
+  load()
+})
 
 async function load() {
-  const { data } = await api.get('/admin/recharges/')
+  const params: Record<string, string> = {}
+  if (search.value) params.username = search.value
+  const { data } = await api.get('/admin/recharges/', { params })
   recharges.value = Array.isArray(data) ? data : data.results || []
 }
 
@@ -46,12 +63,15 @@ const filtered = computed(() => filter.value === 'all' ? recharges.value : recha
   <div class="admin-page">
     <header>
       <h2>充值审核</h2>
-      <select v-model="filter" class="filter-select">
-        <option value="pending">待审核</option>
-        <option value="completed">已完成</option>
-        <option value="failed">已拒绝</option>
-        <option value="all">全部</option>
-      </select>
+      <div class="header-right">
+        <input v-model="search" placeholder="搜索用户名…" class="search-input" />
+        <select v-model="filter" class="filter-select">
+          <option value="pending">待审核</option>
+          <option value="completed">已完成</option>
+          <option value="failed">已拒绝</option>
+          <option value="all">全部</option>
+        </select>
+      </div>
     </header>
 
     <div class="table-wrapper">
@@ -80,7 +100,11 @@ const filtered = computed(() => filter.value === 'all' ? recharges.value : recha
 
 <style scoped>
 .admin-page { max-width: 1000px; }
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.header-right { display: flex; gap: 0.5rem; align-items: center; }
+.search-input { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); padding: 0.5rem 0.75rem; border-radius: 6px; outline: none; font-size: 0.875rem; width: 180px; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
 .filter-select { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); padding: 0.5rem 0.75rem; border-radius: 6px; outline: none; font-size: 0.875rem; }
 .filter-select:focus { border-color: var(--accent); }
 .table-wrapper { background: var(--bg-card); backdrop-filter: blur(12px); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }

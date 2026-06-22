@@ -19,7 +19,7 @@ class UnreadCountView(APIView):
     def get(self, request):
         total = Notification.objects.filter(is_active=True).count()
         read = NotificationRead.objects.filter(user=request.user).count()
-        return Response({'unread': total - read})
+        return Response({'unread': max(0, total - read)})
 
 
 class MarkReadView(APIView):
@@ -38,7 +38,7 @@ class MarkReadView(APIView):
                 NotificationRead.objects.get_or_create(user=request.user, notification=n)
         total = Notification.objects.filter(is_active=True).count()
         read = NotificationRead.objects.filter(user=request.user).count()
-        return Response({'unread': total - read})
+        return Response({'unread': max(0, total - read)})
 
 
 class AdminNotificationListCreateView(generics.ListCreateAPIView):

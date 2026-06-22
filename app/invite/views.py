@@ -41,8 +41,11 @@ class EarningsView(APIView):
 
 class CreateWithdrawalView(APIView):
     def post(self, request):
-        amount = request.data.get('amount', 0)
-        if not amount or amount < 1:
+        try:
+            amount = int(request.data.get('amount', 0))
+        except (ValueError, TypeError):
+            return Response({'error': '无效金额'}, status=status.HTTP_400_BAD_REQUEST)
+        if amount < 1:
             return Response({'error': '无效金额'}, status=status.HTTP_400_BAD_REQUEST)
 
         min_amount = SystemSetting.get_int('withdrawal_min', 3000)

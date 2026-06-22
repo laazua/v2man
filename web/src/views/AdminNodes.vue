@@ -9,7 +9,7 @@ const showForm = ref(false)
 const sshAuthType = ref<'key' | 'password'>('key')
 const form = ref({
   name: '', protocol: 'vless', address: '', port: 443,
-  config: '{}', config_path: '/etc/v2ray/config.json',
+  config: '{}', config_path: '/usr/local/etc/v2ray/config.json',
   reload_cmd: 'systemctl restart v2ray',
   sort_order: 0, is_active: true,
   ssh_host: '', ssh_port: 22, ssh_user: 'root',
@@ -17,7 +17,10 @@ const form = ref({
 })
 const error = ref('')
 const deploying = ref<number | null>(null)
-const deployMsg = ref('')
+const deployResultMap = ref<Record<number, any>>({})
+const showDeployDetail = ref(false)
+const deployDetailNodeName = ref('')
+const deployDetailResult = ref<any>(null)
 
 onMounted(() => loadNodes())
 
@@ -29,7 +32,7 @@ async function loadNodes() {
 function openCreate() {
   editing.value = null
   sshAuthType.value = 'key'
-  form.value = { name: '', protocol: 'vless', address: '', port: 443, config: '{}', config_path: '/etc/v2ray/config.json', reload_cmd: 'systemctl restart v2ray', sort_order: 0, is_active: true, ssh_host: '', ssh_port: 22, ssh_user: 'root', ssh_key: '', ssh_password: '' }
+  form.value = { name: '', protocol: 'vless', address: '', port: 443, config: '{}', config_path: '/usr/local/etc/v2ray/config.json', reload_cmd: 'systemctl restart v2ray', sort_order: 0, is_active: true, ssh_host: '', ssh_port: 22, ssh_user: 'root', ssh_key: '', ssh_password: '' }
   showForm.value = true
 }
 
@@ -45,7 +48,7 @@ function openEdit(node: Node) {
     config_path: node.config_path,
     reload_cmd: node.reload_cmd,
     sort_order: node.sort_order,
-    is_active: true,
+    is_active: node.is_active,
     ssh_host: node.ssh_host || '',
     ssh_port: node.ssh_port || 22,
     ssh_user: node.ssh_user || 'root',
@@ -72,7 +75,7 @@ async function save() {
       if (!payload.ssh_password) delete payload.ssh_password
     }
     if (editing.value) {
-      await api.put(`/admin/nodes/${editing.value.id}/`, payload)
+      await api.patch(`/admin/nodes/${editing.value.id}/`, payload)
     } else {
       await api.post('/admin/nodes/', payload)
     }
@@ -89,19 +92,21 @@ async function remove(node: Node) {
   await loadNodes()
 }
 
+function openDeployDetail(nodeName: string, result: any) {
+  deployDetailNodeName.value = nodeName
+  deployDetailResult.value = result
+  showDeployDetail.value = true
+}
+
 async function deploy(node: Node) {
-  deployMsg.value = ''
+  deployResultMap.value[node.id] = null
   deploying.value = node.id
   try {
     const { data } = await api.post(`/admin/nodes/${node.id}/deploy/`)
-    if (data.success) {
-      deployMsg.value = `${node.name} 部署成功`
-    } else {
-      deployMsg.value = `部署失败: ${data.error}`
-    }
+    deployResultMap.value[node.id] = data
     await loadNodes()
   } catch (e: any) {
-    deployMsg.value = e.response?.data?.error || '请求失败'
+    deployResultMap.value[node.id] = { success: false, error: e.response?.data?.error || '请求失败' }
   } finally {
     deploying.value = null
   }
@@ -114,8 +119,6 @@ async function deploy(node: Node) {
       <h2>节点管理</h2>
       <button @click="openCreate" class="btn-primary">+ 新增节点</button>
     </header>
-
-    <p v-if="deployMsg" :class="deployMsg.includes('成功') ? 'success' : 'error'" style="margin-bottom:0.75rem">{{ deployMsg }}</p>
 
     <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
       <div class="modal">
@@ -163,7 +166,7 @@ async function deploy(node: Node) {
     <div class="table-wrapper">
       <table class="data-table">
         <thead>
-          <tr><th>名称</th><th>协议</th><th>地址</th><th>端口</th><th>SSH</th><th>部署</th><th>操作</th></tr>
+          <tr><th>名称</th><th>协议</th><th>地址</th><th>端口</th><th>SSH</th><th>部署</th><th>状态</th><th>操作</th></tr>
         </thead>
         <tbody>
           <tr v-for="node in nodes" :key="node.id">
@@ -178,14 +181,36 @@ async function deploy(node: Node) {
               </button>
               <span v-else style="color:var(--text-muted);font-size:0.78rem">需先配置 SSH</span>
             </td>
+            <td>
+              <template v-if="deployResultMap[node.id]">
+                <span v-if="deployResultMap[node.id].success" class="deploy-ok" style="font-size:0.75rem">成功</span>
+                <span v-else @click="openDeployDetail(node.name, deployResultMap[node.id])" class="deploy-err-link" style="font-size:0.75rem;cursor:pointer;text-decoration:underline">失败</span>
+              </template>
+            </td>
             <td class="actions">
               <button @click="openEdit(node)" class="btn-sm">编辑</button>
               <button @click="remove(node)" class="btn-sm btn-danger">删除</button>
             </td>
           </tr>
-          <tr v-if="!nodes.length"><td colspan="7" class="empty">暂无数据</td></tr>
+          <tr v-if="!nodes.length"><td colspan="8" class="empty">暂无数据</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div v-if="showDeployDetail" class="modal-overlay" @click.self="showDeployDetail = false">
+    <div class="modal" style="width:600px">
+      <h3>部署结果 - {{ deployDetailNodeName }}</h3>
+      <div style="margin-top:1rem;font-size:0.85rem;line-height:1.6;white-space:pre-wrap;word-break:break-all;background:var(--bg-primary);padding:1rem;border-radius:6px;border:1px solid var(--border);max-height:50vh;overflow-y:auto">
+        <template v-if="deployDetailResult">
+          <div v-for="(v, k) in deployDetailResult" :key="k" style="margin-bottom:0.25rem">
+            <span style="color:var(--text-secondary)">{{ k }}:</span> {{ typeof v === 'string' ? v : JSON.stringify(v, null, 2) }}
+          </div>
+        </template>
+      </div>
+      <div class="form-actions">
+        <button @click="showDeployDetail = false" class="btn-primary">关闭</button>
+      </div>
     </div>
   </div>
 </template>
@@ -226,4 +251,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .error { color: var(--danger); font-size: 0.85rem; }
 .success { color: var(--success); font-size: 0.85rem; }
 .empty { text-align: center; color: var(--text-muted); padding: 2rem; }
+.deploy-ok { color: var(--success); }
+.deploy-err { color: var(--danger); }
+.deploy-err-link { color: var(--danger); cursor: pointer; text-decoration: underline; }
+.deploy-err-link:hover { opacity: 0.8; }
 </style>

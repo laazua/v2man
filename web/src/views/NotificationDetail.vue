@@ -11,8 +11,9 @@ const notFound = ref(false)
 
 onMounted(async () => {
   try {
-    const { data } = await api.get(`/notifications/`)
-    const n = data.find((n: any) => n.id === Number(route.params.id))
+    const { data } = await api.get(`/notifications/?id=${route.params.id}`)
+    const list = Array.isArray(data) ? data : data.results
+    const n = list.find((n: any) => n.id === Number(route.params.id))
     if (n) {
       notification.value = n
       await api.post('/notifications/mark-read/', { notification_id: n.id })
