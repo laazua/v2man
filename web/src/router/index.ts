@@ -5,6 +5,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/splash', name: 'Splash', component: () => import('../views/Splash.vue') },
   { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
   { path: '/register', name: 'Register', component: () => import('../views/Register.vue') },
+  { path: '/verify', name: 'Verify', component: () => import('../views/VerifyCode.vue') },
   { path: '/forgot-password', name: 'ForgotPassword', component: () => import('../views/ForgotPassword.vue') },
   { path: '/reset-password', name: 'ResetPassword', component: () => import('../views/ForgotPassword.vue') },
   {
