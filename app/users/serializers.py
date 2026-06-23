@@ -74,3 +74,10 @@ class PaymentOrderSerializer(serializers.ModelSerializer):
             'id', 'out_trade_no', 'trade_no', 'status', 'created_at',
             'paid_at',
         ]
+
+
+class ActivateSerializer(serializers.Serializer):
+    """Serializer for email verification code activation."""
+
+    email = serializers.EmailField()
+    code = serializers.CharField(min_length=6, max_length=6)
