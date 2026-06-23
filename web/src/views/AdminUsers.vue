@@ -101,9 +101,21 @@ const showInvalidateDialog = ref(false)
 const invalidateResult = ref<any>(null)
 const syncingId = ref<number | null>(null)
 const openMenuId = ref<number | null>(null)
+const menuDirUp = ref(false)
 
-function toggleMenu(id: number) {
-  openMenuId.value = openMenuId.value === id ? null : id
+function toggleMenu(id: number, el?: EventTarget | null) {
+  if (openMenuId.value === id) {
+    openMenuId.value = null
+    return
+  }
+  openMenuId.value = id
+  if (el instanceof HTMLElement) {
+    const rect = el.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    menuDirUp.value = spaceBelow < 240
+  } else {
+    menuDirUp.value = false
+  }
 }
 
 function closeMenu() {
@@ -296,8 +308,8 @@ async function syncConfig(u: User) {
             <td>{{ u.expire_date ? new Date(u.expire_date).toLocaleDateString('zh-CN') : '无' }}</td>
             <td><span :class="['badge', u.is_active !== false ? 'active' : 'inactive']">{{ u.is_active !== false ? '正常' : '停用' }}</span></td>
             <td class="action-cell">
-              <div class="dropdown-wrap">
-                <button @click.stop="toggleMenu(u.id)" class="btn-more">···</button>
+              <div :class="['dropdown-wrap', { dropup: openMenuId === u.id && menuDirUp }]">
+                <button @click.stop="toggleMenu(u.id, $event.target)" class="btn-more">···</button>
                 <div v-if="openMenuId === u.id" class="dropdown-menu" @click.stop>
                   <button @click="openEdit(u); closeMenu()" class="dropdown-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -408,6 +420,7 @@ input:focus, select:focus { border-color: var(--accent); }
 .success { color: var(--success); font-size: 0.85rem; margin-bottom: 0.5rem; }
 .action-cell { position: relative; }
 .dropdown-wrap { position: relative; display: inline-block; }
+.dropup .dropdown-menu { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 4px; }
 .btn-more { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.6rem; color: var(--text-muted); letter-spacing: 2px; transition: all 0.2s; }
 .btn-more:hover { background: var(--border-solid); color: var(--text-primary); }
 .dropdown-menu { position: absolute; right: 0; top: 100%; margin-top: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 50; min-width: 140px; padding: 0.35rem; backdrop-filter: blur(12px); }
