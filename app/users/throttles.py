@@ -18,19 +18,6 @@ class LoginThrottle(SimpleRateThrottle):
         }
 
 
-class RegisterThrottle(SimpleRateThrottle):
-    """Rate-limit registration requests."""
-
-    scope = 'register'
-
-    def get_cache_key(self, request, view):
-        """Generate cache key using client IP."""
-        return self.cache_format % {
-            'scope': self.scope,
-            'ident': self.get_ident(request),
-        }
-
-
 class PasswordResetThrottle(SimpleRateThrottle):
     """Rate-limit password reset requests."""
 
@@ -41,4 +28,17 @@ class PasswordResetThrottle(SimpleRateThrottle):
         return self.cache_format % {
             'scope': self.scope,
             'ident': self.get_ident(request),
+        }
+
+
+class VerificationCodeThrottle(SimpleRateThrottle):
+    """Rate-limit verification code sending requests."""
+
+    scope = 'verification_code'
+
+    def get_cache_key(self, request, view):
+        email = request.data.get('email', '')
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': email or self.get_ident(request),
         }
