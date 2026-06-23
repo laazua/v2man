@@ -10,8 +10,12 @@ const username = ref('')
 const password = ref('')
 const showPwd = ref(false)
 const error = ref('')
+const loading = ref(false)
 
 async function login() {
+  if (loading.value) return
+  loading.value = true
+  error.value = ''
   try {
     const { data } = await api.post('/auth/login/', {
       username: username.value,
@@ -20,6 +24,7 @@ async function login() {
     setTokens(data.access, data.refresh)
     router.push('/')
   } catch (e: any) {
+    loading.value = false
     if (e.response?.status === 401) {
       error.value = '用户名或密码错误'
     } else if (e.response) {
@@ -108,7 +113,10 @@ async function login() {
         <div class="form-footer">
           <router-link to="/forgot-password" class="forgot-link">忘记密码？</router-link>
         </div>
-        <button type="submit" class="login-btn">登录</button>
+        <button type="submit" class="login-btn" :class="{ loading }" :disabled="loading">
+          <span v-if="loading" class="spinner"></span>
+          <span>{{ loading ? '登录中...' : '登录' }}</span>
+        </button>
       </form>
       <p class="link">
         还没有账号？<router-link to="/register">立即注册</router-link>
@@ -432,15 +440,37 @@ h1 {
   font-weight: 600;
   transition: all 0.25s;
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.login-btn:hover {
+.login-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
 }
 
-.login-btn:active {
+.login-btn:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.login-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .link {
