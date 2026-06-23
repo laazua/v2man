@@ -27,6 +27,8 @@ const pageTitleMap: Record<string, string> = {
   AdminInvite: '邀请管理',
   AdminNotifications: '通知管理',
   AdminContact: '联系管理',
+  AdminPaymentQr: '收款码管理',
+  AdminPaymentSettings: '充值设置',
 }
 
 interface BreadcrumbItem {
@@ -288,11 +290,10 @@ async function saveSettings() {
     <div class="body">
       <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
         <div class="sidebar-header">
-          <div class="nav-logo">
+          <div class="logo-icon-wrap">
             <svg class="plane-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/>
             </svg>
-            <span class="nav-logo-text">{{ siteName }}</span>
           </div>
         </div>
         <!-- 用户功能 -->
@@ -381,6 +382,10 @@ async function saveSettings() {
               <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
               <span class="nav-label">充值设置</span>
             </router-link>
+            <router-link to="/admin/invite" class="nav-item" active-class="active">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span class="nav-label">邀请管理</span>
+            </router-link>
             <router-link to="/admin/notifications" class="nav-item" active-class="active">
               <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
               <span class="nav-label">通知管理</span>
@@ -444,34 +449,36 @@ async function saveSettings() {
 .body { display: flex; flex: 1; overflow: hidden; }
 
 /* ── Sidebar ── */
-.sidebar { width: var(--nav-width); background: var(--bg-secondary); padding: 0; display: flex; flex-direction: column; gap: 0; overflow-y: auto; border-right: 1px solid var(--border); flex-shrink: 0; transition: width 0.25s; }
+.sidebar { width: var(--nav-width); background: var(--bg-secondary); padding: 0; display: flex; flex-direction: column; gap: 0; overflow-y: auto; border-right: 1px solid var(--border); flex-shrink: 0; transition: width 0.25s; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .sidebar.collapsed { width: var(--nav-width-collapsed); }
 
-.sidebar-header { display: flex; align-items: center; padding: 1rem 0.75rem; border-bottom: 1px solid var(--border); }
-.sidebar.collapsed .sidebar-header { justify-content: center; padding: 1rem 0.5rem; }
-.nav-logo { display: flex; align-items: center; gap: 0.5rem; }
+.sidebar-header { display: flex; align-items: center; justify-content: center; padding: 1.25rem 0.75rem; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+.sidebar-header::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.4; }
+.sidebar.collapsed .sidebar-header { padding: 1.25rem 0.5rem; }
+
+.logo-icon-wrap { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.06) 100%); border: 1px solid rgba(56,189,248,0.15); transition: all 0.3s; }
+.sidebar.collapsed .logo-icon-wrap { width: 40px; height: 40px; }
+.logo-icon-wrap:hover { background: linear-gradient(135deg, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.1) 100%); border-color: rgba(56,189,248,0.3); transform: scale(1.05); }
 .plane-icon { color: var(--accent); flex-shrink: 0; }
-.nav-logo-text { font-size: 1rem; font-weight: 700; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.sidebar.collapsed .nav-logo-text { display: none; }
 
 /* ── Nav Sections ── */
-.nav-section { border-bottom: 1px solid var(--border); }
-.sidebar.collapsed .nav-section { border-bottom: none; }
-.section-header { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; cursor: pointer; transition: background 0.15s; user-select: none; }
-.section-header:hover { background: var(--bg-hover); }
+.nav-section { border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+.sidebar.collapsed .nav-section { border-bottom: none; padding-bottom: 0; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0.75rem 0.4rem; cursor: pointer; transition: background 0.15s; user-select: none; }
+.section-header:hover { background: transparent; }
 .sidebar.collapsed .section-header { display: none; }
-.section-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.section-arrow { color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+.section-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; }
+.section-arrow { color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; opacity: 0.4; }
 .section-arrow.open { transform: rotate(90deg); }
-.section-body { display: flex; flex-direction: column; }
+.section-body { display: flex; flex-direction: column; gap: 1px; padding: 0 0.5rem 0.25rem; }
 
 /* ── Nav Items ── */
-.nav-item { position: relative; display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.75rem; margin: 0 0.5rem; color: var(--text-secondary); text-decoration: none; border-radius: var(--radius-sm); font-size: 0.925rem; transition: all 0.2s; white-space: nowrap; }
-.sidebar.collapsed .nav-item { justify-content: center; padding: 0.625rem; margin: 0 0.25rem; }
+.nav-item { position: relative; display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.6rem; margin: 0; color: var(--text-secondary); text-decoration: none; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; white-space: nowrap; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 0.55rem; margin: 0 0.25rem; }
 .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-.nav-item.active { background: var(--accent-soft); color: var(--accent); }
-.nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: var(--accent-gradient); }
-.sidebar.collapsed .nav-item.active::before { left: -4px; }
+.nav-item.active { background: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(56,189,248,0.05) 100%); color: var(--accent); font-weight: 500; box-shadow: inset 0 1px 0 rgba(56,189,248,0.08); }
+.nav-item.active::before { content: ''; position: absolute; left: -2px; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: var(--accent-gradient); box-shadow: 0 0 8px rgba(56,189,248,0.3); }
+.sidebar.collapsed .nav-item.active::before { left: -6px; }
 .nav-icon { font-size: 1rem; flex-shrink: 0; display: flex; align-items: center; position: relative; }
 .nav-icon svg { display: block; }
 .nav-badge { position: absolute; top: -6px; right: -8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--danger); color: #fff; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
