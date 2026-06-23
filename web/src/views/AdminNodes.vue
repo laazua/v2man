@@ -9,7 +9,7 @@ const showForm = ref(false)
 const sshAuthType = ref<'key' | 'password'>('key')
 const form = ref({
   name: '', protocol: 'vless', address: '', port: 443,
-  config: '{}', config_path: '/usr/local/etc/v2ray/config.json',
+  config: '{}', config_path: '/etc/v2ray/configs',
   reload_cmd: 'systemctl restart v2ray',
   sort_order: 0, is_active: true,
   ssh_host: '', ssh_port: 22, ssh_user: 'root',
@@ -32,7 +32,7 @@ async function loadNodes() {
 function openCreate() {
   editing.value = null
   sshAuthType.value = 'key'
-  form.value = { name: '', protocol: 'vless', address: '', port: 443, config: '{}', config_path: '/usr/local/etc/v2ray/config.json', reload_cmd: 'systemctl restart v2ray', sort_order: 0, is_active: true, ssh_host: '', ssh_port: 22, ssh_user: 'root', ssh_key: '', ssh_password: '' }
+  form.value = { name: '', protocol: 'vmess', address: '', port: 443, config: '{}', config_path: '/etc/v2ray/configs', reload_cmd: 'systemctl restart v2ray', sort_order: 0, is_active: true, ssh_host: '', ssh_port: 22, ssh_user: 'root', ssh_key: '', ssh_password: '' }
   showForm.value = true
 }
 

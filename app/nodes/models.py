@@ -28,7 +28,7 @@ class Node(models.Model):
     )
     config_path = models.CharField(
         max_length=512,
-        default="/usr/local/etc/v2ray/config.json",
+        default="/etc/v2ray/configs",
         verbose_name="V2Ray 配置路径",
         help_text="配置文件路径或配置目录路径，如 /etc/v2ray/configs/",
     )
