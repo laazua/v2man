@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import api, { setTokens } from '../api'
+import api from '../api'
 import { useSiteName } from '../api/site'
 
 const router = useRouter()
@@ -26,16 +26,7 @@ async function register() {
     }
     if (inviteCode.value) payload.invite_code = inviteCode.value
     await api.post('/auth/register/', payload)
-    try {
-      const { data } = await api.post('/auth/login/', {
-        username: username.value,
-        password: password.value,
-      })
-      setTokens(data.access, data.refresh)
-      router.push('/')
-    } catch {
-      error.value = '注册成功，请前往登录'
-    }
+    router.push(`/verify?email=${encodeURIComponent(email.value)}`)
   } catch (e: any) {
     error.value = e.response?.data?.message || '注册失败，请重试'
   } finally {
