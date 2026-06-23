@@ -3,6 +3,7 @@
 import hashlib
 import logging
 import mimetypes
+import random
 import secrets
 import time
 from typing import Any
@@ -26,6 +27,7 @@ from payment.drivers import get_payment_driver
 
 from .models import User
 from .serializers import (
+    ActivateSerializer,
     PaymentOrderSerializer,
     RegisterSerializer,
     RechargeSerializer,
@@ -49,10 +51,12 @@ class RegisterView(generics.CreateAPIView):
         *args: Any,
         **kwargs: Any,
     ) -> Response:
-        """Register a new user and process invite code if provided."""
+        """Register a new user and send verification email."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        user.is_active = False
+        user.save()
 
         code_str = serializer.validated_data.get('invite_code', '')
         if code_str:
@@ -65,14 +69,109 @@ class RegisterView(generics.CreateAPIView):
             except InviteCode.DoesNotExist:
                 pass
 
-        logger.info(
-            '用户注册: id=%s username=%s invite_code=%s',
-            user.id, user.username, code_str or '无',
-        )
+        # 生成并发送验证码
+        email = user.email
+        verify_code = f'{random.randrange(0, 10**6):06d}'
+        cache.set(f'verify_code_{email}', verify_code, 300)
+
+        try:
+            send_mail(
+                'v2man 邮箱验证',
+                f'您的验证码是：{verify_code}\n\n'
+                f'验证码 5 分钟内有效。如果您没有注册 v2man，请忽略此邮件。',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+        except Exception:
+            logger.warning('验证码发送失败: email=%s', email)
+
+        logger.info('用户注册: id=%s username=%s email=%s invite_code=%s',
+                     user.id, user.username, email, code_str or '无')
         return Response({
             'user': UserProfileSerializer(user).data,
-            'message': '注册成功',
+            'message': '注册成功，请查看邮箱输入验证码完成激活',
         }, status=status.HTTP_201_CREATED)
+
+
+class ActivateView(APIView):
+    """Activate user account with verification code."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = ActivateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        code = serializer.validated_data['code']
+
+        cached_code = cache.get(f'verify_code_{email}')
+        if not cached_code:
+            return Response(
+                {'error': '验证码已过期，请重新获取'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if cached_code != code:
+            return Response(
+                {'error': '验证码错误'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(email=email, is_active=False)
+        except User.DoesNotExist:
+            return Response(
+                {'error': '该邮箱未注册或已激活'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.is_active = True
+        user.save()
+        cache.delete(f'verify_code_{email}')
+
+        logger.info('用户激活: id=%s email=%s', user.id, email)
+        return Response({
+            'message': '邮箱验证成功，请登录',
+        })
+
+
+class ResendCodeView(APIView):
+    """Resend verification code to user's email."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '')
+
+        try:
+            user = User.objects.get(email=email, is_active=False)
+        except User.DoesNotExist:
+            return Response(
+                {'error': '该邮箱未注册或已激活'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        verify_code = f'{random.randrange(0, 10**6):06d}'
+        cache.set(f'verify_code_{email}', verify_code, 300)
+
+        try:
+            send_mail(
+                'v2man 邮箱验证',
+                f'您的验证码是：{verify_code}\n\n'
+                f'验证码 5 分钟内有效。如果您没有注册 v2man，请忽略此邮件。',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+        except Exception:
+            return Response(
+                {'error': '邮件发送失败，请检查邮箱配置'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        logger.info('验证码重新发送: email=%s', email)
+        return Response({'message': '验证码已重新发送到您的邮箱'})
 
 
 class ProfileView(APIView):
