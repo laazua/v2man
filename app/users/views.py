@@ -84,7 +84,13 @@ class RegisterView(generics.CreateAPIView):
                 fail_silently=False,
             )
         except Exception:
-            logger.warning('验证码发送失败: email=%s', email)
+            user.delete(keep_parents=True)
+            cache.delete(f'verify_code_{email}')
+            logger.error('注册失败（邮件发送失败）: email=%s', email)
+            return Response(
+                {'error': '验证码发送失败，请检查邮箱配置或稍后重试'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         logger.info('用户注册: id=%s username=%s email=%s invite_code=%s',
                      user.id, user.username, email, code_str or '无')

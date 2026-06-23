@@ -1,9 +1,19 @@
 """Tests for email verification registration flow."""
 
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from users.models import User
+
+
+from django.core.mail.backends.base import BaseEmailBackend
+
+
+class BrokenEmailBackend(BaseEmailBackend):
+    """Email backend that always raises an exception."""
+
+    def send_messages(self, messages):
+        raise ConnectionError('模拟邮件服务器不可用')
 
 
 class VerificationRegistrationTest(TestCase):
@@ -85,3 +95,14 @@ class VerificationRegistrationTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('邮箱验证', mail.outbox[0].subject)
+
+    @override_settings(EMAIL_BACKEND='users.tests.test_verification.BrokenEmailBackend')
+    def test_register_rolls_back_user_on_email_failure(self):
+        """邮件发送失败时，用户不入库"""
+        resp = self.client.post('/api/auth/register/', {
+            'username': 'rollbacktest',
+            'email': 'rollback@test.com',
+            'password': 'testpass123',
+        })
+        self.assertEqual(resp.status_code, 500)
+        self.assertFalse(User.objects.filter(username='rollbacktest').exists())
