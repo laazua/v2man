@@ -1,7 +1,13 @@
-from pathlib import Path
-from datetime import timedelta
-from dotenv import load_dotenv
+"""
+Django settings for v2man project.
+"""
+
 import os
+import re
+from datetime import timedelta
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -120,10 +126,9 @@ TEMPLATES = [{
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-import re
 _db_url = os.getenv('DATABASE_URL', 'sqlite:///db.sqlite3')
 if _db_url.startswith('postgres'):
-    import dj_database_url
+    import dj_database_url  # type: ignore[import-untyped]
     DATABASES = {'default': dj_database_url.config(default=_db_url)}
 elif _db_url.startswith('sqlite'):
     _match = re.match(r'sqlite:///(.+)', _db_url)
@@ -138,10 +143,30 @@ elif _db_url.startswith('sqlite'):
 AUTH_USER_MODEL = 'users.User'
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'UserAttributeSimilarityValidator'
+        ),
+    },
+    {
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'MinimumLengthValidator'
+        ),
+    },
+    {
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'CommonPasswordValidator'
+        ),
+    },
+    {
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'NumericPasswordValidator'
+        ),
+    },
 ]
 
 LANGUAGE_CODE = 'zh-hans'
@@ -157,7 +182,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if o.strip()
+]
 
 CACHES = {
     'default': {
@@ -189,16 +218,24 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_MINUTES', '60'))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_DAYS', '30'))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(
+        minutes=int(os.getenv('JWT_ACCESS_MINUTES', '60'))
+    ),
+    'REFRESH_TOKEN_LIFETIME': timedelta(
+        days=int(os.getenv('JWT_REFRESH_DAYS', '30'))
+    ),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # Email
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend'
+)
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in (
+    'true', '1', 'yes'
+)
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@v2man.local')

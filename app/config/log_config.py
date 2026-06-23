@@ -1,5 +1,9 @@
-import os
+"""
+Custom logging handlers and utilities for v2man project.
+"""
+
 import logging
+import os
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
@@ -7,12 +11,23 @@ from pathlib import Path
 class SizeAndTimeRotatingFileHandler(TimedRotatingFileHandler):
     """
     同时按天和文件大小切割的日志处理器
-    每天一个日志文件，文件超过 max_bytes 时也切割
+
+    每天一个日志文件，文件超过 max_bytes 时也切割。
     """
 
-    def __init__(self, filename, when='midnight', interval=1,
-                 backup_count=30, max_bytes=100 * 1024 * 1024, encoding='utf-8',
-                 delay=False, utc=False, at_time=None):
+    def __init__(  # noqa: PLR0913
+        self,
+        filename: str,
+        when: str = 'midnight',
+        interval: int = 1,
+        backup_count: int = 30,
+        max_bytes: int = 100 * 1024 * 1024,
+        encoding: str = 'utf-8',
+        delay: bool = False,
+        utc: bool = False,
+        at_time=None,
+    ) -> None:
+        """Initialize handler with both time and size rotation."""
         self.max_bytes = max_bytes
         super().__init__(
             filename, when=when, interval=interval,
@@ -20,11 +35,15 @@ class SizeAndTimeRotatingFileHandler(TimedRotatingFileHandler):
             delay=delay, utc=utc, atTime=at_time,
         )
 
-    def _open(self):
+    def _open(self) -> logging.StreamHandler:
+        """Ensure log directory exists before opening."""
         os.makedirs(os.path.dirname(self.baseFilename), exist_ok=True)
         return super()._open()
 
-    def should_rollover(self, record):
+    def should_rollover(
+        self, record: logging.LogRecord
+    ) -> bool:  # type: ignore[override]
+        """Roll over on time interval or when file exceeds max_bytes."""
         if super().should_rollover(record):
             return True
         if self.stream is None:
@@ -36,18 +55,21 @@ class SizeAndTimeRotatingFileHandler(TimedRotatingFileHandler):
             return False
 
 
-_LOG_DIR = Path(__file__).resolve().parent.parent / 'logs'
+_LOG_DIR: Path = Path(__file__).resolve().parent.parent / 'logs'
 
 
-def ensure_log_dir():
+def ensure_log_dir() -> None:
+    """Create the log directory if it does not exist."""
     _LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_log_path(name):
+def get_log_path(name: str) -> str:
+    """Return the full path for a log file with the given name."""
     return str(_LOG_DIR / f'{name}.log')
 
 
-def setup_logging():
+def setup_logging() -> tuple[logging.Handler, logging.Handler]:
+    """Configure and return API and business log handlers."""
     ensure_log_dir()
     formatter = logging.Formatter(
         '[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s',

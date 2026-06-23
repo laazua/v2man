@@ -1,8 +1,11 @@
+"""用户联系反馈消息模型。"""
+
 from django.conf import settings
 from django.db import models
 
 
 class ContactMessage(models.Model):
+    """用户联系反馈消息模型，支持工单式回复。"""
     STATUS_CHOICES = [
         ("pending", "待回复"),
         ("replied", "已回复"),
@@ -18,15 +21,24 @@ class ContactMessage(models.Model):
         related_name="contact_messages",
         verbose_name="用户",
     )
-    subject = models.CharField(max_length=200, blank=True, verbose_name="主题")
+    subject = models.CharField(
+        max_length=200, blank=True, verbose_name="主题",
+    )
     message = models.TextField(verbose_name="内容")
     is_admin = models.BooleanField(default=False, verbose_name="管理员消息")
-    visible_to_user = models.BooleanField(default=True, verbose_name="用户可见")
-    status = models.CharField(
-        max_length=10, choices=STATUS_CHOICES, default="pending", db_index=True, verbose_name="状态"
+    visible_to_user = models.BooleanField(
+        default=True, verbose_name="用户可见",
     )
-    replied_at = models.DateTimeField(null=True, blank=True, verbose_name="最后回复时间")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="提交时间")
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default="pending",
+        db_index=True, verbose_name="状态",
+    )
+    replied_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="最后回复时间",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="提交时间",
+    )
 
     class Meta:
         db_table = "contact_messages"

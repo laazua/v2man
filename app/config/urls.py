@@ -1,8 +1,12 @@
-from django.urls import path, include
+"""
+URL configuration for v2man project.
+"""
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import include, path
 
-urlpatterns = [
+urlpatterns: list = [
     path('api/auth/', include('users.urls')),
     path('api/nodes/', include('nodes.urls')),
     path('api/subscription/', include('nodes.urls_sub')),

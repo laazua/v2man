@@ -120,6 +120,23 @@ ssh_port: 22
 
 部署过程中输出实时日志。部署失败可查看错误信息排查。
 
+### 节点依赖
+
+部署流程需要在目标节点上解压 V2Ray 安装包，因此目标节点必须安装 **unzip**：
+
+```bash
+# Debian / Ubuntu
+apt install -y unzip
+
+# CentOS / RHEL / Rocky / Alma
+yum install -y unzip
+
+# Fedora
+dnf install -y unzip
+```
+
+> 如果节点上已安装 python3，系统会优先使用 python3 的 zipfile 标准库解压，不依赖 unzip。仅在 python3 不可用时才回退到 unzip。
+
 ### 节点同步
 
 - **新增/编辑用户** → 自动触发节点同步

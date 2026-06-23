@@ -1,3 +1,3 @@
-from django.test import TestCase
+"""Tests for the traffic module."""
 
-# Create your tests here.
+from django.test import TestCase  # noqa: F401

@@ -1,5 +1,9 @@
+"""App configuration for the nodes app."""
+
 from django.apps import AppConfig
 
 
 class NodesConfig(AppConfig):
-    name = 'nodes'
+    """Configuration for the nodes application."""
+
+    name = "nodes"

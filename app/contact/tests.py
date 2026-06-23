@@ -1,3 +1,1 @@
-from django.test import TestCase
-
-# Create your tests here.
+"""联系反馈模块测试。"""
