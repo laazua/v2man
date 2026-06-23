@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../api'
 
@@ -13,11 +13,17 @@ const loading = ref(false)
 const resendLoading = ref(false)
 const cooldown = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
+let redirectTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
   if (!email.value) {
     error.value = '缺少邮箱信息，请重新注册'
   }
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+  if (redirectTimer) clearTimeout(redirectTimer)
 })
 
 function startCooldown() {
@@ -38,7 +44,7 @@ async function activate() {
   try {
     await api.post('/auth/activate/', { email: email.value, code: code.value })
     success.value = '邮箱验证成功！即将跳转登录页...'
-    setTimeout(() => router.push('/login'), 2000)
+    redirectTimer = setTimeout(() => router.push('/login'), 2000)
   } catch (e: any) {
     error.value = e.response?.data?.error || '验证失败'
   } finally {
