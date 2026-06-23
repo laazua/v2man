@@ -10,7 +10,7 @@ from . import views
 from .throttles import (
     LoginThrottle,
     PasswordResetThrottle,
-    RegisterThrottle,
+    VerificationCodeThrottle,
 )
 
 urlpatterns = [
@@ -18,9 +18,7 @@ urlpatterns = [
         throttle_classes=[LoginThrottle],
     ), name='login'),
     path('refresh/', TokenRefreshView.as_view(), name='refresh'),
-    path('register/', views.RegisterView.as_view(
-        throttle_classes=[RegisterThrottle],
-    ), name='register'),
+    path('register/', views.RegisterView.as_view(), name='register'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('recharge/', views.RechargeView.as_view(), name='recharge'),
     path('password-reset/', views.PasswordResetRequestView.as_view(
@@ -41,4 +39,8 @@ urlpatterns = [
          name='payment-notify'),
     path('payment/orders/', views.PaymentOrderListView.as_view(),
          name='payment-orders'),
+    path('activate/', views.ActivateView.as_view(), name='activate'),
+    path('verification-code/resend/', views.ResendCodeView.as_view(
+        throttle_classes=[VerificationCodeThrottle],
+    ), name='resend-code'),
 ]
