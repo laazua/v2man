@@ -81,7 +81,7 @@ async function saveEdit() {
   if (editForm.value.password) payload.password = editForm.value.password
 
   try {
-    await api.patch(`/admin/users/${editing.value!.id}/`, payload)
+    await api.patch(`/admin/users/${editing.value!.id}/update_user/`, payload)
     showEdit.value = false
     const { data } = await api.get('/admin/users/')
     users.value = data
