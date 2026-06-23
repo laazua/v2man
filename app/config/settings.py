@@ -142,6 +142,8 @@ elif _db_url.startswith('sqlite'):
 
 AUTH_USER_MODEL = 'users.User'
 
+AUTHENTICATION_BACKENDS = ['users.backends.UsernameOrEmailBackend']
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': (
