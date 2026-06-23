@@ -178,6 +178,20 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         })
 
     @action(detail=True, methods=['post'])
+    def destroy_user(
+        self, request: Request, pk: Optional[str] = None,
+    ) -> Response:
+        """Delete a user account permanently."""
+        user = self.get_object()
+        username = user.username
+        user.delete()
+        logger.info(
+            '管理员删除用户: admin_id=%s target_user=%s',
+            request.user.id, username,
+        )
+        return Response({'success': True, 'message': f'用户 {username} 已删除'})
+
+    @action(detail=True, methods=['post'])
     def sync_config(
         self, request: Request, pk: Optional[str] = None,
     ) -> Response:

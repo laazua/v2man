@@ -96,6 +96,7 @@ function formatMB(mb: number) {
 }
 
 const confirmTarget = ref<User | null>(null)
+const deleteTarget = ref<User | null>(null)
 const showInvalidateDialog = ref(false)
 const invalidateResult = ref<any>(null)
 const syncingId = ref<number | null>(null)
@@ -116,6 +117,17 @@ async function doInvalidate() {
     users.value = data
   } catch (e: any) {
     alert(e.response?.data?.error || '操作失败')
+  }
+}
+
+async function deleteUser(u: User) {
+  if (!confirm(`确定删除用户「${u.username}」吗？此操作不可恢复。`)) return
+  try {
+    await api.post(`/admin/users/${u.id}/destroy_user/`)
+    const { data } = await api.get('/admin/users/')
+    users.value = data
+  } catch (e: any) {
+    alert(e.response?.data?.error || '删除失败')
   }
 }
 
@@ -258,6 +270,7 @@ async function syncConfig(u: User) {
               <button @click="openTopUp(u)" class="btn-sm btn-topup">充值</button>
               <button @click="syncConfig(u)" :disabled="syncingId === u.id" class="btn-sm btn-sync">同步配置</button>
               <button @click="invalidateSub(u)" class="btn-sm btn-danger">失效订阅</button>
+              <button @click="deleteUser(u)" class="btn-sm btn-danger">删除</button>
             </td>
           </tr>
           <tr v-if="!users.length"><td colspan="10" class="empty">暂无数据</td></tr>
