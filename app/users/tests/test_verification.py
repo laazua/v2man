@@ -96,6 +96,18 @@ class VerificationRegistrationTest(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('邮箱验证', mail.outbox[0].subject)
 
+    def test_activate_with_duplicate_email(self):
+        """同一邮箱多次注册，激活时取第一个未激活用户"""
+        User.objects.create_user('dup1', 'dup@test.com', 'testpass123', is_active=False)
+        User.objects.create_user('dup2', 'dup@test.com', 'testpass123', is_active=False)
+        from django.core.cache import cache
+        cache.set('verify_code_dup@test.com', '123456', 300)
+        resp = self.client.post('/api/auth/activate/', {
+            'email': 'dup@test.com', 'code': '123456',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(User.objects.get(username='dup1').is_active)
+
     @override_settings(EMAIL_BACKEND='users.tests.test_verification.BrokenEmailBackend')
     def test_register_rolls_back_user_on_email_failure(self):
         """邮件发送失败时，用户不入库"""

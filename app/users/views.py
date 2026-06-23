@@ -124,9 +124,8 @@ class ActivateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            user = User.objects.get(email=email, is_active=False)
-        except User.DoesNotExist:
+        user = User.objects.filter(email=email, is_active=False).first()
+        if not user:
             return Response(
                 {'error': '该邮箱未注册或已激活'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -150,9 +149,8 @@ class ResendCodeView(APIView):
     def post(self, request):
         email = request.data.get('email', '')
 
-        try:
-            user = User.objects.get(email=email, is_active=False)
-        except User.DoesNotExist:
+        user = User.objects.filter(email=email, is_active=False).first()
+        if not user:
             return Response(
                 {'error': '该邮箱未注册或已激活'},
                 status=status.HTTP_400_BAD_REQUEST,
