@@ -79,7 +79,8 @@ uv sync
 
 ```bash
 uv run manage.py migrate
-uv run manage.py createsuperuser
+uv run manage.py ensureadmin          # 自动创建默认管理员 admin/admin123
+# 或手动创建：uv run manage.py createsuperuser
 ```
 
 ### 2.4 收集静态文件

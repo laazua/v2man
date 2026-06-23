@@ -145,12 +145,20 @@ docker compose logs -f
 # 执行数据库迁移
 docker compose exec web uv run manage.py migrate
 
-# 创建管理员
-docker compose exec web uv run manage.py createsuperuser
+# 创建管理员（容器启动时自动创建，也可手动执行）
+docker compose exec web uv run manage.py ensureadmin
 
 # 创建 media 目录
 docker compose exec web mkdir -p /app/media
 ```
+
+> **自动创建管理员**：容器首次启动时，`Dockerfile` 中的启动链会自动执行 `manage.py ensureadmin`，
+> 创建默认管理员账号 `admin / admin123`（邮箱 `admin@v2man.local`）。
+> 如需自定义用户名或密码，可手动执行：
+> ```bash
+> docker compose exec web uv run manage.py ensureadmin --username myadmin --password mypass
+> ```
+> 如果系统中已有 superuser，该命令会直接跳过，不会覆盖已有账号。
 
 ---
 
@@ -241,7 +249,7 @@ services:
 - [ ] 数据库使用 PostgreSQL
 - [ ] 已配置 SMTP 邮箱（密码重置功能）
 - [ ] Nginx 已配置 HTTPS
-- [ ] 已执行 `docker compose exec web uv run manage.py migrate`
+- [ ] 容器启动后自动执行 `migrate` + `ensureadmin`，无需手动操作
 
 ---
 
