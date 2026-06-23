@@ -31,6 +31,19 @@ class PasswordResetThrottle(SimpleRateThrottle):
         }
 
 
+class ActivateThrottle(SimpleRateThrottle):
+    """Rate-limit activation attempts to prevent brute-force."""
+
+    scope = 'activate'
+
+    def get_cache_key(self, request, view):
+        """Generate cache key using client IP."""
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': self.get_ident(request),
+        }
+
+
 class VerificationCodeThrottle(SimpleRateThrottle):
     """Rate-limit verification code sending requests."""
 

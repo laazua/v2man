@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
 
 from . import views
 from .throttles import (
+    ActivateThrottle,
     LoginThrottle,
     PasswordResetThrottle,
     VerificationCodeThrottle,
@@ -39,7 +40,9 @@ urlpatterns = [
          name='payment-notify'),
     path('payment/orders/', views.PaymentOrderListView.as_view(),
          name='payment-orders'),
-    path('activate/', views.ActivateView.as_view(), name='activate'),
+    path('activate/', views.ActivateView.as_view(
+        throttle_classes=[ActivateThrottle],
+    ), name='activate'),
     path('verification-code/resend/', views.ResendCodeView.as_view(
         throttle_classes=[VerificationCodeThrottle],
     ), name='resend-code'),

@@ -214,6 +214,7 @@ REST_FRAMEWORK = {
         'login': '10/minute',
         'password_reset': '5/hour',
         'verification_code': '1/minute',
+        'activate': '10/minute',
     },
 }
 

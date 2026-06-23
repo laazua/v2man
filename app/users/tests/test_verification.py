@@ -1,8 +1,7 @@
 """Tests for email verification registration flow."""
 
-import time
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from rest_framework.test import APIClient
 from users.models import User
 
