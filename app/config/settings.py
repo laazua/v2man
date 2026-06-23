@@ -212,8 +212,8 @@ REST_FRAMEWORK = {
         'anon': '20/hour',
         'user': '1000/hour',
         'login': '10/minute',
-        'register': '3/hour',
         'password_reset': '5/hour',
+        'verification_code': '1/minute',
     },
 }
 
