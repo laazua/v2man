@@ -18,11 +18,12 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - "80:80"
+      - "8022:80"
     volumes:
       - static:/app/staticfiles:ro
     depends_on:
       - web
+    restart: unless-stopped
 
   cron:
     build:

@@ -10,6 +10,7 @@
 |------|----------|
 | Docker | >= 24.0 |
 | Docker Compose | >= 2.20 |
+| Node.js | >= 22（构建前端用） |
 
 ---
 
@@ -19,6 +20,7 @@
 v2man/
 ├── Dockerfile              # 后端 Django 镜像
 ├── Dockerfile.cron         # 调度器镜像（APScheduler）
+├── Dockerfile.nginx        # Nginx 镜像（仅打包，不构建）
 ├── docker-compose.yml      # 主编排文件
 ├── nginx.conf              # Nginx 配置
 ├── app/
@@ -26,6 +28,7 @@ v2man/
 │   ├── .env.production     # 生产环境变量（可选）
 │   └── ...
 └── web/
+    ├── dist/               # 前端构建产物（需本地构建）
     └── ...
 ```
 
@@ -84,20 +87,38 @@ SECRET_KEY=production-only-secret
 
 ## 2. 构建前端
 
-容器部署需要先在前端构建静态文件，因为 Nginx 容器通过挂载卷读取构建产物：
+Nginx 镜像通过 `COPY web/dist` 将前端产物打包进镜像，因此需要在构建 Docker 镜像前先本地构建前端：
 
 ```bash
 cd web
 npm install
-npm run build
+npm run build-only
 cd ..
 ```
 
 构建产物在 `web/dist/` 目录。
 
+> 注意：使用 `build-only` 脚本（仅 `vite build`），跳过 `vue-tsc` 类型检查。生产容器构建不依赖 type-check，后者应在 CI 或开发阶段完成。
+
 ---
 
-## 3. 启动服务
+## 3. 构建镜像
+
+```bash
+docker compose build
+```
+
+### 按需构建单个服务
+
+```bash
+docker compose build web      # 仅后端
+docker compose build cron     # 仅调度器
+docker compose build nginx    # 仅 Nginx（需先构建前端）
+```
+
+---
+
+## 4. 启动服务
 
 ```bash
 docker compose up -d
@@ -107,7 +128,7 @@ docker compose up -d
 
 | 容器 | 作用 | 端口 |
 |------|------|------|
-| `web` | Django + gunicorn 后端 | :8000（内部） |
+| `web` | Django + gunicorn 后端 | :8055（外部） |
 | `nginx` | 反向代理 + 静态文件 | :80（外部） |
 | `cron` | APScheduler 调度器 | - |
 | `db` | PostgreSQL 数据库 | :5432（内部） |
@@ -133,7 +154,7 @@ docker compose exec web mkdir -p /app/media
 
 ---
 
-## 4. 更新部署
+## 5. 更新部署
 
 ### 更新后端代码
 
@@ -152,11 +173,14 @@ docker compose up -d
 ```bash
 cd web
 npm install
-npm run build
+npm run build-only
 cd ..
 
-# 重建 nginx 容器（加载新构建产物）
-docker compose restart nginx
+# 重建 nginx 镜像（打包新构建产物）
+docker compose build nginx
+
+# 重启
+docker compose up -d
 ```
 
 ### 快速重启所有服务
@@ -174,41 +198,9 @@ docker compose logs -f cron
 
 ---
 
-## 5. Nginx 配置
+## 6. Nginx HTTPS 配置
 
-`nginx.conf` 已默认配置好：
-
-```nginx
-server {
-    listen 80;
-    server_name _;
-
-    location /api/ {
-        proxy_pass http://web:8055;     # 指向 Django 后端容器
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    location /admin/ {
-        proxy_pass http://web:8055;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    location /static/ {
-        alias /app/staticfiles/;
-    }
-
-    location / {
-        root /app/web/dist;
-        try_files $uri $uri/ /index.html;
-    }
-}
-```
-
-如需配置 SSL 证书，在 `nginx.conf` 中添加 443 端口的 SSL 配置：
+`nginx.conf` 已默认配置 HTTP 反向代理。如需启用 HTTPS，在 `nginx.conf` 中添加：
 
 ```nginx
 server {
@@ -234,15 +226,13 @@ server {
 services:
   nginx:
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - static:/app/staticfiles:ro
-      - dist:/app/web/dist:ro
-      - /path/to/ssl:/etc/nginx/ssl:ro      # 挂载 SSL 证书
+      - /path/to/ssl:/etc/nginx/ssl:ro
 ```
 
 ---
 
-## 6. 生产环境 checklist
+## 7. 生产环境 checklist
 
 - [ ] `SECRET_KEY` 已替换为随机字符串（可用 `openssl rand -hex 32` 生成）
 - [ ] `DEBUG=False`
@@ -255,7 +245,7 @@ services:
 
 ---
 
-## 7. 常用运维命令
+## 8. 常用运维命令
 
 ```bash
 # 进入 Django shell
