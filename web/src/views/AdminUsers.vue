@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../api'
 import { copyText, copiedKey } from '../api/copy'
 
@@ -46,6 +46,8 @@ async function submitTopUp() {
   }
 }
 
+function onDocClick() { openMenuId.value = null }
+
 onMounted(async () => {
   const [u, p] = await Promise.all([
     api.get('/admin/users/'),
@@ -53,6 +55,11 @@ onMounted(async () => {
   ])
   users.value = u.data
   plans.value = p.data
+  document.addEventListener('click', onDocClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocClick)
 })
 
 function openEdit(u: User) {
