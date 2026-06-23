@@ -346,7 +346,7 @@ async function syncConfig(u: User) {
 <style scoped>
 .admin-page { max-width: 1000px; }
 header { margin-bottom: 1.5rem; }
-.table-wrapper { background: var(--bg-card); backdrop-filter: blur(12px); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.table-wrapper { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border); }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; }
 .data-table th { background: var(--bg-primary); color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); }
