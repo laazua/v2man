@@ -1,7 +1,7 @@
 """从所有活跃节点采集流量数据并写入数据库。"""
 
-import math
 import logging
+import math
 from datetime import datetime
 from typing import Any
 
@@ -13,7 +13,7 @@ from nodes.models import Node
 from nodes.ssh_utils import collect_node_traffic
 from traffic.models import TrafficLog
 
-logger = logging.getLogger('business')
+logger = logging.getLogger("business")
 User = get_user_model()
 
 
@@ -44,9 +44,7 @@ class Command(BaseCommand):
             self.stdout.write(f"[{node.name}] 采集... ", ending="")
             result = collect_node_traffic(node)
             if "error" in result:
-                self.stderr.write(self.style.ERROR(
-                    f"失败: {result['error']}"
-                ))
+                self.stderr.write(self.style.ERROR(f"失败: {result['error']}"))
                 continue
 
             if not result:
@@ -58,9 +56,7 @@ class Command(BaseCommand):
                 try:
                     user = User.objects.get(username=email_prefix)
                 except User.DoesNotExist:
-                    self.stdout.write(
-                        f"  跳过未知用户: {email_prefix}"
-                    )
+                    self.stdout.write(f"  跳过未知用户: {email_prefix}")
                     continue
 
                 uplink = counters["uplink"]
@@ -76,13 +72,10 @@ class Command(BaseCommand):
                     user=user,
                     node_name=node.name,
                     recorded_at__gte=midnight,
-                ).aggregate(
-                    u=Sum('upload_bytes'), d=Sum('download_bytes')
-                )
-                if (
-                    (recent['u'] or 0) >= uplink
-                    and (recent['d'] or 0) >= downlink
-                ):
+                ).aggregate(u=Sum("upload_bytes"), d=Sum("download_bytes"))
+                if (recent["u"] or 0) >= uplink and (
+                    recent["d"] or 0
+                ) >= downlink:
                     self.stdout.write(
                         f"  跳过 {user.username}"
                         "（当日已有相同或更大流量记录）"
@@ -115,14 +108,18 @@ class Command(BaseCommand):
                 total_records += 1
                 count += 1
 
-            self.stdout.write(self.style.SUCCESS(
-                f"OK ({count} 用户, {count} 条记录)"
-            ))
+            self.stdout.write(
+                self.style.SUCCESS(f"OK ({count} 用户, {count} 条记录)")
+            )
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\n完成: {total_records} 条记录, {total_mb} MB"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n完成: {total_records} 条记录, {total_mb} MB"
+            )
+        )
         logger.info(
-            '定时采集流量完成: 节点数=%s 记录数=%s 流量=%sMB',
-            qs.count(), total_records, total_mb,
+            "定时采集流量完成: 节点数=%s 记录数=%s 流量=%sMB",
+            qs.count(),
+            total_records,
+            total_mb,
         )

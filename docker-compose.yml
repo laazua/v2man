@@ -41,12 +41,12 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: v2man
-      POSTGRES_USER: v2man
-      POSTGRES_PASSWORD: v2man
+      POSTGRES_USER: ${DB_USER:-v2man}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?数据库密码未设置，请设置 DB_PASSWORD 环境变量}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U v2man -d v2man"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-v2man} -d v2man"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -8,38 +8,91 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0001_initial'),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Recharge',
+            name="Recharge",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.BigIntegerField(verbose_name='金额(分)')),
-                ('status', models.CharField(choices=[('pending', '待确认'), ('completed', '已完成'), ('failed', '失败')], default='pending', max_length=16, verbose_name='状态')),
-                ('admin_remark', models.TextField(blank=True, verbose_name='管理员备注')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('confirmed_at', models.DateTimeField(blank=True, null=True, verbose_name='确认时间')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recharges', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount", models.BigIntegerField(verbose_name="金额(分)")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "待确认"),
+                            ("completed", "已完成"),
+                            ("failed", "失败"),
+                        ],
+                        default="pending",
+                        max_length=16,
+                        verbose_name="状态",
+                    ),
+                ),
+                (
+                    "admin_remark",
+                    models.TextField(blank=True, verbose_name="管理员备注"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "confirmed_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="确认时间"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recharges",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '充值记录',
-                'db_table': 'recharges',
-                'ordering': ['-created_at'],
+                "verbose_name": "充值记录",
+                "db_table": "recharges",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Wallet',
+            name="Wallet",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('balance', models.BigIntegerField(default=0, verbose_name='余额(分)')),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='wallet', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "balance",
+                    models.BigIntegerField(default=0, verbose_name="余额(分)"),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="wallet",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '钱包',
-                'db_table': 'wallets',
+                "verbose_name": "钱包",
+                "db_table": "wallets",
             },
         ),
     ]

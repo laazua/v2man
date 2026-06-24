@@ -11,8 +11,7 @@ class Plan(models.Model):
         max_digits=8, decimal_places=2, verbose_name="价格"
     )
     traffic_limit = models.BigIntegerField(
-        verbose_name="流量上限(MB)",
-        help_text="单位 MB，0 表示不限"
+        verbose_name="流量上限(MB)", help_text="单位 MB，0 表示不限"
     )
     duration_days = models.IntegerField(verbose_name="有效期(天)")
     is_active = models.BooleanField(

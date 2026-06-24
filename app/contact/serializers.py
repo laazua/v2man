@@ -7,6 +7,7 @@ from .models import ContactMessage
 
 class ReplySerializer(serializers.Serializer):
     """回复子序列化器。"""
+
     id = serializers.IntegerField(read_only=True)
     message = serializers.CharField(read_only=True)
     is_admin = serializers.BooleanField(read_only=True)
@@ -16,16 +17,26 @@ class ReplySerializer(serializers.Serializer):
 
 class ContactMessageSerializer(serializers.ModelSerializer):
     """用户视角的工单序列化器。"""
+
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = ContactMessage
         fields = [
-            "id", "subject", "message", "status",
-            "replies", "replied_at", "created_at",
+            "id",
+            "subject",
+            "message",
+            "status",
+            "replies",
+            "replied_at",
+            "created_at",
         ]
         read_only_fields = [
-            "id", "status", "replies", "replied_at", "created_at",
+            "id",
+            "status",
+            "replies",
+            "replied_at",
+            "created_at",
         ]
 
     def get_replies(self, obj: ContactMessage) -> list[dict]:
@@ -37,16 +48,24 @@ class ContactMessageSerializer(serializers.ModelSerializer):
 
 class AdminContactMessageSerializer(serializers.ModelSerializer):
     """管理员视角的工单序列化器。"""
+
     username = serializers.CharField(
-        source="user.username", read_only=True,
+        source="user.username",
+        read_only=True,
     )
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = ContactMessage
         fields = [
-            "id", "username", "subject", "message",
-            "status", "replies", "replied_at", "created_at",
+            "id",
+            "username",
+            "subject",
+            "message",
+            "status",
+            "replies",
+            "replied_at",
+            "created_at",
         ]
         read_only_fields = fields
 

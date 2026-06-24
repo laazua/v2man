@@ -10,7 +10,11 @@ class PlanAdmin(admin.ModelAdmin):
     """Admin interface for managing Plan records."""
 
     list_display = [
-        "name", "price", "traffic_limit",
-        "duration_days", "is_active", "sort_order",
+        "name",
+        "price",
+        "traffic_limit",
+        "duration_days",
+        "is_active",
+        "sort_order",
     ]
     filter_horizontal = ["nodes"]

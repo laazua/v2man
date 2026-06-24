@@ -15,21 +15,64 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='ContactMessage',
+            name="ContactMessage",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('subject', models.CharField(max_length=200, verbose_name='主题')),
-                ('message', models.TextField(verbose_name='内容')),
-                ('status', models.CharField(choices=[('pending', '待回复'), ('replied', '已回复')], db_index=True, default='pending', max_length=10, verbose_name='状态')),
-                ('reply', models.TextField(blank=True, default='', verbose_name='回复')),
-                ('replied_at', models.DateTimeField(blank=True, null=True, verbose_name='回复时间')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='提交时间')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='contact_messages', to=settings.AUTH_USER_MODEL, verbose_name='用户')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "subject",
+                    models.CharField(max_length=200, verbose_name="主题"),
+                ),
+                ("message", models.TextField(verbose_name="内容")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("pending", "待回复"), ("replied", "已回复")],
+                        db_index=True,
+                        default="pending",
+                        max_length=10,
+                        verbose_name="状态",
+                    ),
+                ),
+                (
+                    "reply",
+                    models.TextField(
+                        blank=True, default="", verbose_name="回复"
+                    ),
+                ),
+                (
+                    "replied_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="回复时间"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="提交时间"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="contact_messages",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="用户",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '联系记录',
-                'db_table': 'contact_messages',
-                'ordering': ['-created_at'],
+                "verbose_name": "联系记录",
+                "db_table": "contact_messages",
+                "ordering": ["-created_at"],
             },
         ),
     ]

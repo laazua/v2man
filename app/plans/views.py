@@ -1,4 +1,5 @@
 """Views for plan listing and purchase."""
+
 import logging
 
 from django.db import transaction
@@ -14,7 +15,7 @@ from users.wallet import Wallet
 from .models import Plan
 from .serializers import PlanSerializer
 
-logger = logging.getLogger('business')
+logger = logging.getLogger("business")
 
 
 class PlanListView(generics.ListAPIView):
@@ -34,8 +35,7 @@ class PurchaseView(APIView):
             plan = Plan.objects.get(id=plan_id, is_active=True)
         except Plan.DoesNotExist:
             return Response(
-                {'error': '套餐不存在'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "套餐不存在"}, status=status.HTTP_404_NOT_FOUND
             )
 
         user = request.user
@@ -50,9 +50,9 @@ class PurchaseView(APIView):
                 if wallet.balance < price_cents:
                     return Response(
                         {
-                            'error': '余额不足',
-                            'balance': wallet.balance,
-                            'need': price_cents,
+                            "error": "余额不足",
+                            "balance": wallet.balance,
+                            "need": price_cents,
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
@@ -64,8 +64,8 @@ class PurchaseView(APIView):
             user.traffic_total = (
                 plan.traffic_limit if plan.traffic_limit > 0 else -1
             )
-            user.expire_date = (
-                timezone.now() + timezone.timedelta(days=plan.duration_days)
+            user.expire_date = timezone.now() + timezone.timedelta(
+                days=plan.duration_days
             )
             user.save()
 
@@ -74,6 +74,7 @@ class PurchaseView(APIView):
             sync_errors = []
             try:
                 from nodes.ssh_utils import sync_users_to_node
+
                 for node in plan.nodes.filter(is_active=True):
                     err = sync_users_to_node(node)
                     if err:
@@ -91,23 +92,26 @@ class PurchaseView(APIView):
                 sub.delete()
                 return Response(
                     {
-                        'error': '节点同步失败，已自动退款',
-                        'sync_errors': sync_errors,
+                        "error": "节点同步失败，已自动退款",
+                        "sync_errors": sync_errors,
                     },
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
 
         logger.info(
-            '用户购买套餐: user_id=%s plan_id=%s plan_name=%s '
-            'price=%s balance_remaining=%s',
-            user.id, plan.id, plan.name, plan.price,
+            "用户购买套餐: user_id=%s plan_id=%s plan_name=%s "
+            "price=%s balance_remaining=%s",
+            user.id,
+            plan.id,
+            plan.name,
+            plan.price,
             wallet.balance if wallet else 0,
         )
         return Response(
             {
-                'success': True,
-                'message': f'已购买 {plan.name}',
-                'balance_remaining': wallet.balance if wallet else 0,
-                'subscription_token': str(sub.token),
+                "success": True,
+                "message": f"已购买 {plan.name}",
+                "balance_remaining": wallet.balance if wallet else 0,
+                "subscription_token": str(sub.token),
             }
         )

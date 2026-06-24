@@ -43,16 +43,29 @@ cp app/.env.example app/.env
 编辑 `app/.env`，生产环境建议：
 
 ```ini
+# Django 核心
 SECRET_KEY=your-very-long-random-secret-key
 DEBUG=False
-DATABASE_URL=postgres://v2man:v2man@db:5432/v2man
 ALLOWED_HOSTS=v2man.example.com
-CORS_ALLOWED_ORIGINS=https://v2man.example.com
+
+# 数据库（docker-compose 启动时会自动注入 DB_PASSWORD）
+DATABASE_URL=postgres://v2man:${DB_PASSWORD}@db:5432/v2man
+
+# 静态文件
 STATIC_ROOT=/app/staticfiles
 
+# 前端地址（密码重置等邮件中的跳转链接）
+FRONTEND_URL=https://v2man.example.com
+
+# 跨域
+CORS_ALLOWED_ORIGINS=https://v2man.example.com
+CSRF_TRUSTED_ORIGINS=https://v2man.example.com
+
+# JWT
 JWT_ACCESS_MINUTES=60
 JWT_REFRESH_DAYS=30
 
+# SMTP 邮件
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.qq.com
 EMAIL_PORT=465
@@ -62,17 +75,27 @@ EMAIL_USE_SSL=True
 DEFAULT_FROM_EMAIL=noreply@example.com
 ```
 
-### 数据库连接说明
+### 数据库密码
 
-`docker-compose.yml` 中的数据库账号密码默认值：
+`docker-compose.yml` 的 db 服务使用 `${DB_PASSWORD:?...}` 引用，**启动前必须传入 `DB_PASSWORD` 环境变量**：
 
+```bash
+export DB_PASSWORD=your-strong-password
+docker compose up -d
 ```
-POSTGRES_DB=v2man
-POSTGRES_USER=v2man
-POSTGRES_PASSWORD=v2man
+
+或在 `docker-compose.yml` 同目录创建 `.env` 文件写入：
+
+```ini
+DB_PASSWORD=your-strong-password
 ```
 
-如果修改了这些值，`DATABASE_URL` 中的用户名密码也要同步修改。
+如果修改了数据库用户名，还需同步设置：
+
+```bash
+export DB_USER=myuser DB_PASSWORD=mypass
+docker compose up -d
+```
 
 ### 生产专属配置（可选）
 
@@ -246,6 +269,9 @@ services:
 - [ ] `DEBUG=False`
 - [ ] `ALLOWED_HOSTS` 已设置为实际域名
 - [ ] `CORS_ALLOWED_ORIGINS` 已设置为前端域名
+- [ ] `CSRF_TRUSTED_ORIGINS` 已设置且与 `CORS_ALLOWED_ORIGINS` 一致
+- [ ] `FRONTEND_URL` 已设置为前端域名（密码重置邮件用）
+- [ ] `DB_PASSWORD` 已设置为强密码
 - [ ] 数据库使用 PostgreSQL
 - [ ] 已配置 SMTP 邮箱（密码重置功能）
 - [ ] Nginx 已配置 HTTPS

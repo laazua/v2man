@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 from django.http import HttpRequest, HttpResponse
 
-api_logger: logging.Logger = logging.getLogger('api.requests')
+api_logger: logging.Logger = logging.getLogger("api.requests")
 
 
 class APILogMiddleware:
@@ -26,13 +26,13 @@ class APILogMiddleware:
         response = self.get_response(request)
         duration: float = time.time() - start
         user_id = (
-            getattr(request.user, 'id', 'anon')
-            if hasattr(request, 'user')
-            else 'pre-auth'
+            getattr(request.user, "id", "anon")
+            if hasattr(request, "user")
+            else "pre-auth"
         )
 
         api_logger.info(
-            '%s %s %s %s %.3fs',
+            "%s %s %s %s %.3fs",
             request.method,
             request.path,
             user_id,

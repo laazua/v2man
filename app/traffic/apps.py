@@ -6,4 +6,4 @@ from django.apps import AppConfig
 class TrafficConfig(AppConfig):
     """Django app configuration for the traffic application."""
 
-    name = 'traffic'
+    name = "traffic"

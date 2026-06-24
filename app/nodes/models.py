@@ -18,12 +18,16 @@ class Node(models.Model):
 
     name = models.CharField(max_length=128, verbose_name="节点名称")
     protocol = models.CharField(
-        max_length=32, choices=PROTOCOL_CHOICES, verbose_name="协议",
+        max_length=32,
+        choices=PROTOCOL_CHOICES,
+        verbose_name="协议",
     )
     address = models.CharField(max_length=256, verbose_name="地址")
     port = models.IntegerField(verbose_name="端口")
     config = models.JSONField(
-        default=dict, blank=True, verbose_name="协议配置",
+        default=dict,
+        blank=True,
+        verbose_name="协议配置",
         help_text="各协议的专属配置，如 flow/encryption/obfs 等",
     )
     config_path = models.CharField(
@@ -39,27 +43,38 @@ class Node(models.Model):
         help_text="重载 V2Ray 的命令，如 systemctl restart v2ray / v2ray -d <目录> 等",
     )
     is_active = models.BooleanField(
-        default=True, db_index=True, verbose_name="启用",
+        default=True,
+        db_index=True,
+        verbose_name="启用",
     )
     sort_order = models.IntegerField(default=0, verbose_name="排序")
     created_at = models.DateTimeField(auto_now_add=True)
     deployed_at = models.DateTimeField(
-        null=True, blank=True, verbose_name="最后部署时间",
+        null=True,
+        blank=True,
+        verbose_name="最后部署时间",
     )
 
     ssh_host = models.CharField(
-        max_length=256, blank=True, verbose_name="SSH 地址",
+        max_length=256,
+        blank=True,
+        verbose_name="SSH 地址",
     )
     ssh_port = models.IntegerField(default=22, verbose_name="SSH 端口")
     ssh_user = models.CharField(
-        max_length=64, default="root", verbose_name="SSH 用户",
+        max_length=64,
+        default="root",
+        verbose_name="SSH 用户",
     )
     ssh_key = models.TextField(
-        blank=True, verbose_name="SSH 私钥",
+        blank=True,
+        verbose_name="SSH 私钥",
         help_text="私钥认证，与密码二选一",
     )
     ssh_password = EncryptedCharField(
-        max_length=1024, blank=True, verbose_name="SSH 密码",
+        max_length=1024,
+        blank=True,
+        verbose_name="SSH 密码",
         help_text="密码认证，与私钥二选一（自动加密存储）",
     )
 

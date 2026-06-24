@@ -7,24 +7,37 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('content', models.TextField()),
-                ('is_pinned', models.BooleanField(default=False, verbose_name='置顶')),
-                ('is_active', models.BooleanField(default=True, verbose_name='显示')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("content", models.TextField()),
+                (
+                    "is_pinned",
+                    models.BooleanField(default=False, verbose_name="置顶"),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(default=True, verbose_name="显示"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': '通知',
-                'verbose_name_plural': '通知',
-                'ordering': ['-is_pinned', '-created_at'],
+                "verbose_name": "通知",
+                "verbose_name_plural": "通知",
+                "ordering": ["-is_pinned", "-created_at"],
             },
         ),
     ]

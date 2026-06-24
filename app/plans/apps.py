@@ -6,4 +6,4 @@ from django.apps import AppConfig
 class PlansConfig(AppConfig):
     """Django app configuration for the plans application."""
 
-    name = 'plans'
+    name = "plans"

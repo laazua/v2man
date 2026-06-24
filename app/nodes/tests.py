@@ -40,9 +40,14 @@ class BuildV2RayLinkTest(TestCase):
         )
 
     def test_vless_link(self):
-        node = self._make_node("vless", {
-            "id": "uuid-123", "flow": "xtls-rprx-vision", "tls": "tls",
-        })
+        node = self._make_node(
+            "vless",
+            {
+                "id": "uuid-123",
+                "flow": "xtls-rprx-vision",
+                "tls": "tls",
+            },
+        )
         link = _build_v2ray_link(node)
         self.assertTrue(link.startswith("vless://"))
         self.assertIn("uuid-123", link)
@@ -57,10 +62,16 @@ class BuildV2RayLinkTest(TestCase):
         self.assertTrue(link.startswith("vless://"))
 
     def test_vmess_link(self):
-        node = self._make_node("vmess", {
-            "aid": "0", "scy": "auto", "net": "ws",
-            "host": "example.com", "path": "/ws",
-        })
+        node = self._make_node(
+            "vmess",
+            {
+                "aid": "0",
+                "scy": "auto",
+                "net": "ws",
+                "host": "example.com",
+                "path": "/ws",
+            },
+        )
         link = _build_v2ray_link(node)
         self.assertTrue(link.startswith("vmess://"))
         decoded = base64.b64decode(link[8:]).decode()
@@ -80,9 +91,13 @@ class BuildV2RayLinkTest(TestCase):
         self.assertEqual(data.get("net"), "tcp")
 
     def test_shadowsocks_link(self):
-        node = self._make_node("shadowsocks", {
-            "method": "aes-256-gcm", "password": "secret123",
-        })
+        node = self._make_node(
+            "shadowsocks",
+            {
+                "method": "aes-256-gcm",
+                "password": "secret123",
+            },
+        )
         link = _build_v2ray_link(node)
         self.assertTrue(link.startswith("ss://"))
         self.assertIn("server.example.com", link)
@@ -95,11 +110,14 @@ class BuildV2RayLinkTest(TestCase):
         self.assertTrue(link.startswith("ss://"))
 
     def test_trojan_link(self):
-        node = self._make_node("trojan", {
-            "password": "trojan-pass",
-            "sni": "sni.example.com",
-            "peer": "peer.example.com",
-        })
+        node = self._make_node(
+            "trojan",
+            {
+                "password": "trojan-pass",
+                "sni": "sni.example.com",
+                "peer": "peer.example.com",
+            },
+        )
         link = _build_v2ray_link(node)
         self.assertTrue(link.startswith("trojan://"))
         self.assertIn("trojan-pass", link)
@@ -112,12 +130,15 @@ class BuildV2RayLinkTest(TestCase):
         self.assertIn("sni=server.example.com", link)
 
     def test_hysteria2_link(self):
-        node = self._make_node("hysteria2", {
-            "password": "hy-pass",
-            "obfs": "salamander",
-            "obfs-password": "obfs-pass",
-            "sni": "hy.example.com",
-        })
+        node = self._make_node(
+            "hysteria2",
+            {
+                "password": "hy-pass",
+                "obfs": "salamander",
+                "obfs-password": "obfs-pass",
+                "sni": "hy.example.com",
+            },
+        )
         link = _build_v2ray_link(node)
         self.assertTrue(link.startswith("hysteria2://"))
         self.assertIn("hy-pass@server.example.com", link)
@@ -146,13 +167,17 @@ class GenerateBase64Test(TestCase):
 
     def setUp(self):
         self.node1 = Node(
-            name="Node1", protocol="vless",
-            address="a.com", port=443,
+            name="Node1",
+            protocol="vless",
+            address="a.com",
+            port=443,
             config={"id": "uuid1"},
         )
         self.node2 = Node(
-            name="Node2", protocol="shadowsocks",
-            address="b.com", port=8443,
+            name="Node2",
+            protocol="shadowsocks",
+            address="b.com",
+            port=8443,
             config={"password": "pass"},
         )
 
@@ -180,30 +205,41 @@ class GenerateClashTest(TestCase):
     def setUp(self):
         self.nodes = [
             Node(
-                name="VLESS Node", protocol="vless",
-                address="vless.com", port=443,
+                name="VLESS Node",
+                protocol="vless",
+                address="vless.com",
+                port=443,
                 config={"id": "uuid", "flow": "xtls", "tls": "tls"},
             ),
             Node(
-                name="VMess Node", protocol="vmess",
-                address="vmess.com", port=80,
+                name="VMess Node",
+                protocol="vmess",
+                address="vmess.com",
+                port=80,
                 config={"aid": "1", "scy": "auto", "net": "ws"},
             ),
             Node(
-                name="SS Node", protocol="shadowsocks",
-                address="ss.com", port=8388,
+                name="SS Node",
+                protocol="shadowsocks",
+                address="ss.com",
+                port=8388,
                 config={"method": "aes-256-gcm", "password": "ss-pass"},
             ),
             Node(
-                name="Trojan Node", protocol="trojan",
-                address="trojan.com", port=443,
+                name="Trojan Node",
+                protocol="trojan",
+                address="trojan.com",
+                port=443,
                 config={
-                    "password": "trojan-pass", "sni": "trojan-sni.com",
+                    "password": "trojan-pass",
+                    "sni": "trojan-sni.com",
                 },
             ),
             Node(
-                name="Hy2 Node", protocol="hysteria2",
-                address="hy2.com", port=443,
+                name="Hy2 Node",
+                protocol="hysteria2",
+                address="hy2.com",
+                port=443,
                 config={"password": "hy-pass", "sni": "hy2-sni.com"},
             ),
         ]
@@ -232,13 +268,17 @@ class GenerateSingboxTest(TestCase):
     def setUp(self):
         self.nodes = [
             Node(
-                name="VLESS", protocol="vless",
-                address="a.com", port=443,
+                name="VLESS",
+                protocol="vless",
+                address="a.com",
+                port=443,
                 config={"id": "uuid", "flow": "xtls", "tls": "tls"},
             ),
             Node(
-                name="SS", protocol="shadowsocks",
-                address="b.com", port=8388,
+                name="SS",
+                protocol="shadowsocks",
+                address="b.com",
+                port=8388,
                 config={"method": "aes-256-gcm", "password": "pass"},
             ),
         ]
@@ -264,8 +304,10 @@ class NodeModelTest(TestCase):
 
     def test_default_values(self):
         node = Node.objects.create(
-            name="Default", protocol="vmess",
-            address="x.com", port=80,
+            name="Default",
+            protocol="vmess",
+            address="x.com",
+            port=80,
         )
         self.assertTrue(node.is_active)
         self.assertEqual(node.sort_order, 0)
@@ -304,16 +346,20 @@ class NodeSerializerTest(TestCase):
 
     def test_ssh_configured_false(self):
         node = Node.objects.create(
-            name="No SSH", protocol="vless",
-            address="x.com", port=80,
+            name="No SSH",
+            protocol="vless",
+            address="x.com",
+            port=80,
         )
         data = NodeSerializer(node).data
         self.assertFalse(data["ssh_configured"])
 
     def test_ssh_configured_with_password(self):
         node = Node.objects.create(
-            name="SSH Pass", protocol="vless",
-            address="x.com", port=80,
+            name="SSH Pass",
+            protocol="vless",
+            address="x.com",
+            port=80,
             ssh_password="pass123",
         )
         data = NodeSerializer(node).data
@@ -325,7 +371,8 @@ class SubscriptionModelTest(TestCase):
 
     def test_token_auto_generated(self):
         user = User.objects.create_user(
-            username="sub-test", password="test123",
+            username="sub-test",
+            password="test123",
         )
         sub = Subscription.objects.get(user=user)
         self.assertIsNotNone(sub.token)
@@ -333,7 +380,8 @@ class SubscriptionModelTest(TestCase):
 
     def test_str(self):
         user = User.objects.create_user(
-            username="sub-test2", password="test123",
+            username="sub-test2",
+            password="test123",
         )
         sub = Subscription.objects.get(user=user)
         self.assertIn("sub-test2", str(sub))
@@ -346,12 +394,18 @@ class NodeListViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.active = Node.objects.create(
-            name="Active", protocol="vless",
-            address="a.com", port=443, is_active=True,
+            name="Active",
+            protocol="vless",
+            address="a.com",
+            port=443,
+            is_active=True,
         )
         self.inactive = Node.objects.create(
-            name="Inactive", protocol="vmess",
-            address="b.com", port=80, is_active=False,
+            name="Inactive",
+            protocol="vmess",
+            address="b.com",
+            port=80,
+            is_active=False,
         )
 
     def test_list_only_active(self):
@@ -372,25 +426,29 @@ class SubscriptionViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="sub-user", password="test123",
+            username="sub-user",
+            password="test123",
         )
         self.sub = Subscription.objects.get(user=self.user)
         self.node = Node.objects.create(
-            name="Sub Node", protocol="vless",
-            address="sub.example.com", port=443,
-            config={"id": "test-uuid"}, is_active=True,
+            name="Sub Node",
+            protocol="vless",
+            address="sub.example.com",
+            port=443,
+            config={"id": "test-uuid"},
+            is_active=True,
         )
         self.plan = Plan.objects.create(
-            name="Test Plan", price=5.00,
-            traffic_limit=1024, duration_days=30,
+            name="Test Plan",
+            price=5.00,
+            traffic_limit=1024,
+            duration_days=30,
         )
         self.plan.nodes.add(self.node)
 
     def _assign_plan(self):
         self.user.plan = self.plan
-        self.user.expire_date = (
-            timezone.now() + timezone.timedelta(days=30)
-        )
+        self.user.expire_date = timezone.now() + timezone.timedelta(days=30)
         self.user.save()
 
     def test_base64_format(self):
@@ -426,16 +484,13 @@ class SubscriptionViewTest(TestCase):
 
     def test_invalid_token_404(self):
         resp = self.client.get(
-            "/api/subscription/"
-            "00000000-0000-0000-0000-000000000000/",
+            "/api/subscription/" "00000000-0000-0000-0000-000000000000/",
         )
         self.assertEqual(resp.status_code, 404)
 
     def test_expired_user_returns_error(self):
         self._assign_plan()
-        self.user.expire_date = (
-            timezone.now() - timezone.timedelta(days=1)
-        )
+        self.user.expire_date = timezone.now() - timezone.timedelta(days=1)
         self.user.save()
         resp = self.client.get(f"/api/subscription/{self.sub.token}/")
         self.assertEqual(resp.status_code, 403)

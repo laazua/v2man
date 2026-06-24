@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0004_node_config_path_node_ssh_host_node_ssh_key_and_more'),
+        ("nodes", "0004_node_config_path_node_ssh_host_node_ssh_key_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='node',
-            name='reload_cmd',
-            field=models.CharField(default='systemctl restart v2ray', help_text='重载 V2Ray 的命令，如 systemctl restart v2ray / v2ray -d <目录> 等', max_length=256, verbose_name='重载命令'),
+            model_name="node",
+            name="reload_cmd",
+            field=models.CharField(
+                default="systemctl restart v2ray",
+                help_text="重载 V2Ray 的命令，如 systemctl restart v2ray / v2ray -d <目录> 等",
+                max_length=256,
+                verbose_name="重载命令",
+            ),
         ),
         migrations.AlterField(
-            model_name='node',
-            name='config_path',
-            field=models.CharField(default='/etc/v2ray/config.json', help_text='配置文件路径或配置目录路径，如 /etc/v2ray/configs/', max_length=512, verbose_name='V2Ray 配置路径'),
+            model_name="node",
+            name="config_path",
+            field=models.CharField(
+                default="/etc/v2ray/config.json",
+                help_text="配置文件路径或配置目录路径，如 /etc/v2ray/configs/",
+                max_length=512,
+                verbose_name="V2Ray 配置路径",
+            ),
         ),
     ]

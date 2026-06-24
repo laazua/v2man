@@ -139,7 +139,8 @@ function applyTheme() {
 }
 
 function logout() {
-  localStorage.clear()
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
   router.push('/login')
 }
 

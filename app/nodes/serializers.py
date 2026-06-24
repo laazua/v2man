@@ -11,8 +11,13 @@ class NodePublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Node
         fields = [
-            "id", "name", "protocol", "address", "port",
-            "sort_order", "is_active",
+            "id",
+            "name",
+            "protocol",
+            "address",
+            "port",
+            "sort_order",
+            "is_active",
         ]
 
 
@@ -24,10 +29,23 @@ class NodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Node
         fields = [
-            "id", "name", "protocol", "address", "port", "config",
-            "config_path", "reload_cmd", "sort_order", "is_active",
-            "ssh_host", "ssh_port", "ssh_user", "ssh_key",
-            "ssh_password", "ssh_configured", "deployed_at",
+            "id",
+            "name",
+            "protocol",
+            "address",
+            "port",
+            "config",
+            "config_path",
+            "reload_cmd",
+            "sort_order",
+            "is_active",
+            "ssh_host",
+            "ssh_port",
+            "ssh_user",
+            "ssh_key",
+            "ssh_password",
+            "ssh_configured",
+            "deployed_at",
         ]
         extra_kwargs = {
             "ssh_key": {"write_only": True},

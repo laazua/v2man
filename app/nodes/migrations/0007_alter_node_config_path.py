@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0006_node_ssh_password_alter_node_ssh_key'),
+        ("nodes", "0006_node_ssh_password_alter_node_ssh_key"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='node',
-            name='config_path',
-            field=models.CharField(default='/usr/local/etc/v2ray/config.json', help_text='配置文件路径或配置目录路径，如 /etc/v2ray/configs/', max_length=512, verbose_name='V2Ray 配置路径'),
+            model_name="node",
+            name="config_path",
+            field=models.CharField(
+                default="/usr/local/etc/v2ray/config.json",
+                help_text="配置文件路径或配置目录路径，如 /etc/v2ray/configs/",
+                max_length=512,
+                verbose_name="V2Ray 配置路径",
+            ),
         ),
     ]

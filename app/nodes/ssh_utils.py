@@ -12,7 +12,6 @@ import uuid
 from typing import Optional
 
 import paramiko
-
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -36,15 +35,8 @@ _BINARY_URL: str = (
     "v5.49.0/v2ray-linux-64.zip"
 )
 
-_GH_MIRRORS: list[str] = [
-    "https://ghproxy.com/https://github.com",
-    "https://hub.fastgit.xyz",
-]
 
-
-def _node_template_vars(
-    node: "Node", user_uuid: str = ""
-) -> dict[str, str]:
+def _node_template_vars(node: "Node", user_uuid: str = "") -> dict[str, str]:
     """Build flat dict of template variables from a Node instance."""
     vars_dict: dict[str, str] = {}
     for field in (
@@ -69,10 +61,9 @@ def _node_template_vars(
     return vars_dict
 
 
-def _render_template(
-    template: str, vars_dict: dict[str, str]
-) -> str:
+def _render_template(template: str, vars_dict: dict[str, str]) -> str:
     """Replace {{ var }} placeholders with values from vars_dict."""
+
     def _replacer(m: re.Match) -> str:
         key: str = m.group(1).strip()
         return vars_dict.get(key, m.group(0))
@@ -85,14 +76,10 @@ def _deploy_from_templates(
 ) -> Optional[str]:
     """Deploy configuration from Jinja-like template files."""
     if not os.path.isdir(_TEMPLATE_DIR):
-        logger.info(
-            "模板目录不存在，跳过模板部署: node=%s", node.name
-        )
+        logger.info("模板目录不存在，跳过模板部署: node=%s", node.name)
         return None
 
-    _, _, code = ssh_exec(
-        node, f"mkdir -p {_shell_quote(node.config_path)}"
-    )
+    _, _, code = ssh_exec(node, f"mkdir -p {_shell_quote(node.config_path)}")
     if code != 0:
         return "创建配置目录失败"
 
@@ -103,9 +90,9 @@ def _deploy_from_templates(
         with open(fpath) as f:
             rendered: str = _render_template(f.read(), vars_dict)
         out_name: str = fname[:-3]
-        remote: str = os.path.join(
-            node.config_path, out_name
-        ).replace("\\", "/")
+        remote: str = os.path.join(node.config_path, out_name).replace(
+            "\\", "/"
+        )
         _, _, code = ssh_write_file(node, remote, rendered)
         if code != 0:
             return f"写入 {out_name} 失败"
@@ -122,7 +109,7 @@ def _shell_quote(path: str) -> str:
 def _connect(node: "Node") -> paramiko.SSHClient:
     """Establish SSH connection to the given node."""
     client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
     host: str = node.ssh_host or node.address
     port: int = node.ssh_port or 22
     user: str = node.ssh_user or "root"
@@ -136,7 +123,12 @@ def _connect(node: "Node") -> paramiko.SSHClient:
 
     logger.info(
         "SSH连接: node=%s(%s) host=%s port=%s user=%s auth=%s",
-        node.name, node.id, host, port, user, auth_method,
+        node.name,
+        node.id,
+        host,
+        port,
+        user,
+        auth_method,
     )
     try:
         if node.ssh_key:
@@ -146,14 +138,10 @@ def _connect(node: "Node") -> paramiko.SSHClient:
             except paramiko.SSHException:
                 key_file.seek(0)
                 try:
-                    pkey = paramiko.Ed25519Key.from_private_key(
-                        key_file
-                    )
+                    pkey = paramiko.Ed25519Key.from_private_key(key_file)
                 except paramiko.SSHException:
                     key_file.seek(0)
-                    pkey = paramiko.ECDSAKey.from_private_key(
-                        key_file
-                    )
+                    pkey = paramiko.ECDSAKey.from_private_key(key_file)
             client.connect(
                 host,
                 port=port,
@@ -170,14 +158,10 @@ def _connect(node: "Node") -> paramiko.SSHClient:
                 timeout=10,
             )
         else:
-            raise ValueError(
-                f"节点 {node.name} 未配置 SSH 私钥或密码"
-            )
+            raise ValueError(f"节点 {node.name} 未配置 SSH 私钥或密码")
         logger.info("SSH连接成功: node=%s", node.name)
     except Exception as e:
-        logger.error(
-            "SSH连接失败: node=%s error=%s", node.name, str(e)
-        )
+        logger.error("SSH连接失败: node=%s error=%s", node.name, str(e))
         raise
     return client
 
@@ -189,31 +173,35 @@ def ssh_exec(
     trunc_cmd: str = command[:120].replace("\n", "\\n")
     logger.info(
         "SSH执行: node=%s cmd=%s timeout=%s",
-        node.name, trunc_cmd, timeout,
+        node.name,
+        trunc_cmd,
+        timeout,
     )
     client = _connect(node)
     try:
-        _, stdout, stderr = client.exec_command(
-            command, timeout=timeout
-        )
+        _, stdout, stderr = client.exec_command(command, timeout=timeout)
         exit_code: int = stdout.channel.recv_exit_status()
         out_text: str = stdout.read().decode().strip()
         err_text: str = stderr.read().decode().strip()
         if exit_code != 0:
             logger.warning(
                 "SSH执行失败: node=%s exit=%s stderr=%s",
-                node.name, exit_code, err_text[:200],
+                node.name,
+                exit_code,
+                err_text[:200],
             )
         else:
             logger.info(
                 "SSH执行成功: node=%s exit=%s",
-                node.name, exit_code,
+                node.name,
+                exit_code,
             )
         return out_text, err_text, exit_code
     except Exception as e:
         logger.error(
             "SSH执行异常: node=%s error=%s",
-            node.name, str(e),
+            node.name,
+            str(e),
         )
         raise
     finally:
@@ -228,21 +216,23 @@ def ssh_write_file(
     size: int = len(content)
     logger.info(
         "SSH写文件: node=%s path=%s size=%s",
-        node.name, safe_path, size,
+        node.name,
+        safe_path,
+        size,
     )
-    heredoc: str = (
-        f"cat > {safe_path} << 'V2MANEOF'\n{content}\nV2MANEOF"
-    )
+    heredoc: str = f"cat > {safe_path} << 'V2MANEOF'\n{content}\nV2MANEOF"
     result: tuple[str, str, int] = ssh_exec(node, heredoc)
     if result[2] != 0:
         logger.error(
             "SSH写文件失败: node=%s path=%s",
-            node.name, safe_path,
+            node.name,
+            safe_path,
         )
     else:
         logger.info(
             "SSH写文件成功: node=%s path=%s",
-            node.name, safe_path,
+            node.name,
+            safe_path,
         )
     return result
 
@@ -253,7 +243,9 @@ def ssh_upload_binary(
     """Upload binary data to a remote file via SFTP."""
     logger.info(
         "SSH上传二进制: node=%s path=%s size=%s",
-        node.name, remote_path, len(data),
+        node.name,
+        remote_path,
+        len(data),
     )
     client = _connect(node)
     try:
@@ -262,13 +254,16 @@ def ssh_upload_binary(
             f.write(data)
         logger.info(
             "SSH上传二进制成功: node=%s path=%s",
-            node.name, remote_path,
+            node.name,
+            remote_path,
         )
         return "", "", 0
     except Exception as e:
         logger.error(
             "SSH上传二进制失败: node=%s path=%s error=%s",
-            node.name, remote_path, str(e),
+            node.name,
+            remote_path,
+            str(e),
         )
         return "", str(e), -1
     finally:
@@ -279,9 +274,7 @@ def _inbounds_path(node: "Node") -> str:
     """Determine the inbounds configuration file path."""
     if node.config_path.endswith(".json"):
         return node.config_path
-    return os.path.join(
-        node.config_path, "inbounds.json"
-    ).replace("\\", "/")
+    return os.path.join(node.config_path, "inbounds.json").replace("\\", "/")
 
 
 def _restart_cmd(node: "Node") -> str:
@@ -289,9 +282,7 @@ def _restart_cmd(node: "Node") -> str:
     return node.reload_cmd
 
 
-def sync_user_uuid(
-    node: "Node", old_uuid: str, new_uuid: str
-) -> dict:
+def sync_user_uuid(node: "Node", old_uuid: str, new_uuid: str) -> dict:
     """Sync a user UUID change to the remote node configuration."""
     result: dict = {
         "node_id": node.id,
@@ -322,15 +313,11 @@ def sync_user_uuid(
         logger.info("同步UUID成功: node=%s", node.name)
     except Exception as e:
         result["error"] = str(e)
-        logger.error(
-            "同步UUID失败: node=%s error=%s", node.name, str(e)
-        )
+        logger.error("同步UUID失败: node=%s error=%s", node.name, str(e))
     return result
 
 
-def refresh_node_config(
-    node: "Node", user_uuid: str
-) -> dict:
+def refresh_node_config(node: "Node", user_uuid: str) -> dict:
     """Refresh the remote node configuration (check + restart)."""
     result: dict = {
         "node_id": node.id,
@@ -349,13 +336,10 @@ def refresh_node_config(
         out, _, _ = ssh_exec(node, check_cmd)
         result["uuid_found"] = "found" in out
 
-        restart_cmd: str = (
-            f"{_restart_cmd(node)} 2>&1; echo 'EXIT:$?'"
-        )
+        restart_cmd: str = f"{_restart_cmd(node)} 2>&1; echo 'EXIT:$?'"
         stdout, stderr, code = ssh_exec(node, restart_cmd)
         exit_code: int = int(
-            stdout.split("EXIT:")[-1]
-            if "EXIT:" in stdout else "1"
+            stdout.split("EXIT:")[-1] if "EXIT:" in stdout else "1"
         )
         if exit_code != 0:
             result["error"] = stderr or f"重启返回码 {exit_code}"
@@ -363,20 +347,20 @@ def refresh_node_config(
         result["success"] = True
         logger.info(
             "刷新节点配置成功: node=%s uuid_found=%s",
-            node.name, result["uuid_found"],
+            node.name,
+            result["uuid_found"],
         )
     except Exception as e:
         result["error"] = str(e)
         logger.error(
             "刷新节点配置失败: node=%s error=%s",
-            node.name, str(e),
+            node.name,
+            str(e),
         )
     return result
 
 
-def _build_inbound_entry(
-    node: "Node", uuid_str: str
-) -> dict:
+def _build_inbound_entry(node: "Node", uuid_str: str) -> dict:
     """Build a V2Ray inbound configuration entry for the node."""
     cfg: dict = node.config or {}
     entry: dict = {
@@ -387,17 +371,14 @@ def _build_inbound_entry(
     }
     if node.protocol == "shadowsocks":
         entry["settings"] = {
-            "method": cfg.get(
-                "method", "chacha20-ietf-poly1305"
-            ),
+            "method": cfg.get("method", "chacha20-ietf-poly1305"),
             "password": cfg.get("password") or uuid_str[:16],
         }
     elif node.protocol == "trojan":
         entry["settings"] = {
             "clients": [
                 {
-                    "password": cfg.get("password")
-                    or uuid_str[:16],
+                    "password": cfg.get("password") or uuid_str[:16],
                     "email": f"{uuid_str}@v2man.dev",
                     "level": 0,
                 }
@@ -407,8 +388,7 @@ def _build_inbound_entry(
         entry["settings"] = {
             "clients": [
                 {
-                    "password": cfg.get("password")
-                    or uuid_str[:16],
+                    "password": cfg.get("password") or uuid_str[:16],
                     "email": f"{uuid_str}@v2man.dev",
                     "level": 0,
                 }
@@ -434,16 +414,15 @@ def _patch_v2ray_service(node: "Node") -> Optional[str]:
     """Patch the V2Ray systemd service file for correct config."""
     logger.info(
         "修补V2Ray systemd服务: node=%s config_path=%s",
-        node.name, node.config_path,
+        node.name,
+        node.config_path,
     )
     config_flag: str = (
-        "-d" if not node.config_path.endswith(".json")
-        else "-config"
+        "-d" if not node.config_path.endswith(".json") else "-config"
     )
     safe_cfg: str = _shell_quote(node.config_path)
     expected: str = (
-        f"ExecStart=/etc/v2ray/v2ray run"
-        f" {config_flag} {safe_cfg}"
+        f"ExecStart=/etc/v2ray/v2ray run" f" {config_flag} {safe_cfg}"
     )
     drop_in: str = (
         "/etc/systemd/system/v2ray.service.d/"
@@ -468,9 +447,7 @@ def _patch_v2ray_service(node: "Node") -> Optional[str]:
             return "更新 v2ray.service 失败"
         patched = True
 
-    dropin_check: str = (
-        f"test -f {drop_in} && echo EXISTS || echo MISSING"
-    )
+    dropin_check: str = f"test -f {drop_in} && echo EXISTS || echo MISSING"
     out2, _, _ = ssh_exec(node, dropin_check, timeout=10)
     if "EXISTS" in out2:
         sed_dropin_cmd: str = (
@@ -484,16 +461,10 @@ def _patch_v2ray_service(node: "Node") -> Optional[str]:
         patched = True
 
     if patched:
-        ssh_exec(
-            node, "systemctl daemon-reload 2>&1", timeout=10
-        )
-        logger.info(
-            "systemd服务已修补: node=%s", node.name
-        )
+        ssh_exec(node, "systemctl daemon-reload 2>&1", timeout=10)
+        logger.info("systemd服务已修补: node=%s", node.name)
     else:
-        logger.info(
-            "systemd服务无需修补: node=%s", node.name
-        )
+        logger.info("systemd服务无需修补: node=%s", node.name)
     return None
 
 
@@ -503,16 +474,12 @@ def _try_install_script(node: "Node") -> bool:
     script_dir: str = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), ".."
     )
-    local_script: str = os.path.join(
-        script_dir, "install-v2ray.sh"
-    )
+    local_script: str = os.path.join(script_dir, "install-v2ray.sh")
 
     if not os.path.isfile(local_script):
         for url in _INSTALL_URLS:
             try:
-                with urllib.request.urlopen(
-                    url, timeout=15
-                ) as resp:
+                with urllib.request.urlopen(url, timeout=15) as resp:
                     with open(local_script, "wb") as f:
                         f.write(resp.read())
                 break
@@ -520,25 +487,17 @@ def _try_install_script(node: "Node") -> bool:
                 continue
 
     if not os.path.isfile(local_script):
-        logger.warning(
-            "安装脚本不存在: node=%s", node.name
-        )
+        logger.warning("安装脚本不存在: node=%s", node.name)
         return False
 
     with open(local_script) as f:
         script_content: str = f.read()
 
-    for mirror in _GH_MIRRORS:
-        patched: str = script_content.replace(
-            "https://github.com", mirror
-        )
-        _, _, code = ssh_write_file(
-            node, "/tmp/install-v2ray.sh", patched
-        )
-        if code != 0:
-            continue
+    _, _, code = ssh_write_file(node, "/tmp/install-v2ray.sh", script_content)
+    if code == 0:
         _, _, code = ssh_exec(
-            node, "bash /tmp/install-v2ray.sh 2>&1",
+            node,
+            "bash /tmp/install-v2ray.sh 2>&1",
             timeout=120,
         )
         if code == 0:
@@ -548,17 +507,10 @@ def _try_install_script(node: "Node") -> bool:
                 timeout=10,
             )
             if "MISSING" not in out:
-                logger.info(
-                    "脚本安装V2Ray成功: node=%s", node.name
-                )
+                logger.info("脚本安装V2Ray成功: node=%s", node.name)
                 return True
-            logger.warning(
-                "脚本安装后v2ray未找到: node=%s mirror=%s",
-                node.name, mirror,
-            )
-    logger.error(
-        "脚本安装V2Ray失败: node=%s", node.name
-    )
+            logger.warning("脚本安装后v2ray未找到: node=%s", node.name)
+    logger.error("脚本安装V2Ray失败: node=%s", node.name)
     return False
 
 
@@ -573,9 +525,7 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
     )
     if not os.path.isfile(zip_path):
         try:
-            with urllib.request.urlopen(
-                _BINARY_URL, timeout=60
-            ) as resp:
+            with urllib.request.urlopen(_BINARY_URL, timeout=60) as resp:
                 with open(zip_path, "wb") as f:
                     f.write(resp.read())
         except urllib.error.URLError as e:
@@ -611,12 +561,14 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
     # Diagnostic: check zip status before extraction
     diag: tuple[str, str, int] = ssh_exec(
         node,
-        "ls -la /tmp/v2ray.zip 2>&1"
-        " && echo 'ZIP_OK' || echo 'ZIP_MISSING'",
+        "ls -la /tmp/v2ray.zip 2>&1" " && echo 'ZIP_OK' || echo 'ZIP_MISSING'",
     )
     logger.info(
         "节点v2ray.zip状态: node=%s out=%s err=%s code=%s",
-        node.name, diag[0][:100], diag[1][:100], diag[2],
+        node.name,
+        diag[0][:100],
+        diag[1][:100],
+        diag[2],
     )
 
     cmds: str = (
@@ -626,8 +578,8 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
         "rm -rf v2ray_x && mkdir v2ray_x && "
         # Try python3 zipfile (stdlib) - extract v2ray directly
         "(python3 -c 'import zipfile;"
-        "z=zipfile.ZipFile(\"v2ray.zip\");"
-        "z.extractall(\"v2ray_x\")' 2>&1 || "
+        'z=zipfile.ZipFile("v2ray.zip");'
+        'z.extractall("v2ray_x")\' 2>&1 || '
         # Fallback: ensure unzip, then extract
         "(command -v unzip >/dev/null 2>&1 || "
         "apt install -y unzip -qq 2>&1 || "
@@ -637,14 +589,14 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
         # Find and install v2ray binary
         "v2ray_bin=$(find v2ray_x -name v2ray"
         " -type f | head -1) && "
-        "[ -n \"$v2ray_bin\" ] && "
-        "install -m 755 \"$v2ray_bin\""
+        '[ -n "$v2ray_bin" ] && '
+        'install -m 755 "$v2ray_bin"'
         " /etc/v2ray/v2ray && "
         # Copy resource files alongside the binary
         "for f in geoip.dat geosite.dat; do "
-        "src=$(find v2ray_x -name \"$f\""
+        'src=$(find v2ray_x -name "$f"'
         " -type f | head -1); "
-        "[ -n \"$src\" ] && cp \"$src\""
+        '[ -n "$src" ] && cp "$src"'
         " /etc/v2ray/; done && "
         "touch /var/log/v2ray/access.log"
         " /var/log/v2ray/error.log 2>&1 && "
@@ -655,8 +607,7 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
     out, err, code = ssh_exec(node, cmds, timeout=120)
     if "MISSING" in out or code != 0:
         logger.error(
-            "二进制安装V2Ray失败: node=%s code=%s"
-            " out=%s err=%s",
+            "二进制安装V2Ray失败: node=%s code=%s" " out=%s err=%s",
             node.name,
             code,
             (out or "")[:500],
@@ -664,9 +615,7 @@ def _install_v2ray_binary(node: "Node") -> Optional[str]:
         )
         return "手动安装 v2ray 失败"
 
-    _, _, code = ssh_write_file(
-        node, "/etc/systemd/system/v2ray.service", svc
-    )
+    _, _, code = ssh_write_file(node, "/etc/systemd/system/v2ray.service", svc)
     if code != 0:
         return "创建 systemd 服务文件失败"
     return None
@@ -716,7 +665,9 @@ def deploy_v2ray(node: "Node") -> dict:
     }
     logger.info(
         "部署V2Ray开始: node=%s(%s) admin_uuid=%s",
-        node.name, node.id, admin_uuid[:8] + "***",
+        node.name,
+        node.id,
+        admin_uuid[:8] + "***",
     )
     try:
         install_err: Optional[str] = _ensure_v2ray_installed(node)
@@ -724,9 +675,7 @@ def deploy_v2ray(node: "Node") -> dict:
             result["error"] = install_err
             return result
 
-        _, _, code = ssh_exec(
-            node, "systemctl enable v2ray 2>&1", timeout=10
-        )
+        _, _, code = ssh_exec(node, "systemctl enable v2ray 2>&1", timeout=10)
         if code != 0:
             result["error"] = "启用 systemd 服务失败"
             return result
@@ -759,15 +708,12 @@ def deploy_v2ray(node: "Node") -> dict:
                 result["error"] = templates_used
                 return result
             restart_cmd: str = f"{_restart_cmd(node)} 2>&1"
-            restart_out, restart_err, code = ssh_exec(
-                node, restart_cmd
-            )
+            restart_out, restart_err, code = ssh_exec(node, restart_cmd)
             if code != 0:
-                detail: str = (
-                    restart_err or restart_out or ""
-                ).strip()[-300:]
+                detail: str = (restart_err or restart_out or "").strip()[-300:]
                 result["error"] = (
-                    f"启动 V2Ray 失败: {detail}" if detail
+                    f"启动 V2Ray 失败: {detail}"
+                    if detail
                     else "启动 V2Ray 失败"
                 )
                 return result
@@ -788,9 +734,7 @@ def deploy_v2ray(node: "Node") -> dict:
             config: dict = {
                 "log": {"loglevel": "warning"},
                 "inbounds": [inbound],
-                "outbounds": [
-                    {"protocol": "freedom", "tag": "direct"}
-                ],
+                "outbounds": [{"protocol": "freedom", "tag": "direct"}],
                 "api": {
                     "tag": "api",
                     "services": [
@@ -832,13 +776,15 @@ def deploy_v2ray(node: "Node") -> dict:
                     ]
                 },
             }
-            config.setdefault("inbounds", []).append({
-                "listen": "127.0.0.1",
-                "port": 10085,
-                "protocol": "dokodemo-door",
-                "settings": {"address": "127.0.0.1"},
-                "tag": "api",
-            })
+            config.setdefault("inbounds", []).append(
+                {
+                    "listen": "127.0.0.1",
+                    "port": 10085,
+                    "protocol": "dokodemo-door",
+                    "settings": {"address": "127.0.0.1"},
+                    "tag": "api",
+                }
+            )
             _, _, code = ssh_write_file(
                 node,
                 node.config_path,
@@ -856,12 +802,8 @@ def deploy_v2ray(node: "Node") -> dict:
                 result["error"] = "创建配置目录失败"
                 return result
             files: dict[str, str] = {
-                "log.json": json.dumps(
-                    {"loglevel": "warning"}, indent=2
-                ),
-                "inbounds.json": json.dumps(
-                    {"inbounds": [inbound]}, indent=2
-                ),
+                "log.json": json.dumps({"loglevel": "warning"}, indent=2),
+                "inbounds.json": json.dumps({"inbounds": [inbound]}, indent=2),
                 "outbounds.json": json.dumps(
                     {
                         "outbounds": [
@@ -873,9 +815,7 @@ def deploy_v2ray(node: "Node") -> dict:
                     },
                     indent=2,
                 ),
-                "dns.json": json.dumps(
-                    {"dns": {}}, indent=2
-                ),
+                "dns.json": json.dumps({"dns": {}}, indent=2),
                 "routing.json": json.dumps(
                     {
                         "routing": {
@@ -938,9 +878,7 @@ def deploy_v2ray(node: "Node") -> dict:
                                 "listen": "127.0.0.1",
                                 "port": 10085,
                                 "protocol": "dokodemo-door",
-                                "settings": {
-                                    "address": "127.0.0.1"
-                                },
+                                "settings": {"address": "127.0.0.1"},
                                 "tag": "api",
                             }
                         ]
@@ -949,27 +887,20 @@ def deploy_v2ray(node: "Node") -> dict:
                 ),
             }
             for name, content in files.items():
-                remote: str = os.path.join(
-                    node.config_path, name
-                ).replace("\\", "/")
-                _, _, code = ssh_write_file(
-                    node, remote, content
+                remote: str = os.path.join(node.config_path, name).replace(
+                    "\\", "/"
                 )
+                _, _, code = ssh_write_file(node, remote, content)
                 if code != 0:
                     result["error"] = f"写入 {name} 失败"
                     return result
 
         restart_cmd = f"{_restart_cmd(node)} 2>&1"
-        restart_out, restart_err, code = ssh_exec(
-            node, restart_cmd
-        )
+        restart_out, restart_err, code = ssh_exec(node, restart_cmd)
         if code != 0:
-            detail = (
-                restart_err or restart_out or ""
-            ).strip()[-300:]
+            detail = (restart_err or restart_out or "").strip()[-300:]
             result["error"] = (
-                f"启动 V2Ray 失败: {detail}" if detail
-                else "启动 V2Ray 失败"
+                f"启动 V2Ray 失败: {detail}" if detail else "启动 V2Ray 失败"
             )
             return result
 
@@ -982,7 +913,8 @@ def deploy_v2ray(node: "Node") -> dict:
         result["error"] = str(e)
         logger.error(
             "部署V2Ray失败: node=%s error=%s",
-            node.name, str(e),
+            node.name,
+            str(e),
         )
     return result
 
@@ -992,28 +924,30 @@ def collect_node_traffic(node: "Node") -> dict:
     logger.info("采集节点流量: node=%s", node.name)
     try:
         cmd: str = (
-            "v2ray api stats -server=127.0.0.1:10085"
-            " -json -reset 2>&1"
+            "v2ray api stats -server=127.0.0.1:10085" " -json -reset 2>&1"
         )
         out, err, code = ssh_exec(node, cmd, timeout=30)
         if code != 0:
             msg: str = (err or out or "").strip()[-200:]
             logger.warning(
                 "采集流量失败: node=%s error=%s",
-                node.name, msg,
+                node.name,
+                msg,
             )
             return {"error": f"v2ray api stats 失败: {msg}"}
         data: dict = json.loads(out)
     except json.JSONDecodeError as e:
         logger.error(
             "采集流量JSON解析失败: node=%s error=%s",
-            node.name, str(e),
+            node.name,
+            str(e),
         )
         return {"error": f"JSON 解析失败: {e}"}
     except Exception as e:
         logger.error(
             "采集流量异常: node=%s error=%s",
-            node.name, str(e),
+            node.name,
+            str(e),
         )
         return {"error": str(e)}
 
@@ -1036,7 +970,8 @@ def collect_node_traffic(node: "Node") -> dict:
         result[email_prefix][direction] += value
     logger.info(
         "采集流量完成: node=%s 用户数=%s",
-        node.name, len(result),
+        node.name,
+        len(result),
     )
     return result
 
@@ -1046,18 +981,21 @@ def sync_users_to_node(node: "Node") -> Optional[str]:
     User = get_user_model()
     now = timezone.now()
 
-    users = User.objects.filter(
-        plan__isnull=False,
-        plan__nodes=node,
-        is_active=True,
-        expire_date__gt=now,
-    ).exclude(plan__isnull=True).only(
-        "uuid", "username", "traffic_used", "traffic_total"
+    users = (
+        User.objects.filter(
+            plan__isnull=False,
+            plan__nodes=node,
+            is_active=True,
+            expire_date__gt=now,
+        )
+        .exclude(plan__isnull=True)
+        .only("uuid", "username", "traffic_used", "traffic_total")
     )
     user_list = list(users)
     logger.info(
         "同步用户到节点: node=%s 活跃用户数=%s",
-        node.name, len(user_list),
+        node.name,
+        len(user_list),
     )
 
     if node.protocol in ("shadowsocks",):
@@ -1065,10 +1003,7 @@ def sync_users_to_node(node: "Node") -> Optional[str]:
 
     clients: list[dict] = []
     for u in user_list:
-        if (
-            u.traffic_total > 0
-            and u.traffic_used >= u.traffic_total
-        ):
+        if u.traffic_total > 0 and u.traffic_used >= u.traffic_total:
             continue
         c: dict = {
             "email": f"{u.username}@v2man.dev",
@@ -1076,27 +1011,19 @@ def sync_users_to_node(node: "Node") -> Optional[str]:
         }
         if node.protocol in ("trojan", "hysteria2"):
             cfg: dict = node.config or {}
-            c["password"] = (
-                cfg.get("password") or str(u.uuid)[:16]
-            )
+            c["password"] = cfg.get("password") or str(u.uuid)[:16]
         else:
             c["id"] = str(u.uuid)
             c["alterId"] = 0
         clients.append(c)
 
     if not clients:
-        logger.warning(
-            "同步用户到节点: node=%s 无活跃用户", node.name
-        )
+        logger.warning("同步用户到节点: node=%s 无活跃用户", node.name)
         return "没有活跃用户需要同步"
 
-    inbound: dict = _build_inbound_entry(
-        node, str(user_list[0].uuid)
-    )
+    inbound: dict = _build_inbound_entry(node, str(user_list[0].uuid))
     inbound["settings"]["clients"] = clients
-    content: str = json.dumps(
-        {"inbounds": [inbound]}, indent=2
-    )
+    content: str = json.dumps({"inbounds": [inbound]}, indent=2)
 
     inb_path: str = _inbounds_path(node)
     _, _, code = ssh_write_file(node, inb_path, content)
@@ -1108,18 +1035,18 @@ def sync_users_to_node(node: "Node") -> Optional[str]:
         f"{_restart_cmd(node)} 2>&1; echo EXIT:$?",
         timeout=15,
     )
-    exit_code: int = (
-        int(r.split("EXIT:")[-1].strip())
-        if "EXIT:" in r else 1
-    )
+    exit_code: int = int(r.split("EXIT:")[-1].strip()) if "EXIT:" in r else 1
     if exit_code != 0:
         logger.error(
             "同步后重启V2Ray失败: node=%s exit=%s output=%s",
-            node.name, exit_code, (r or "")[:200],
+            node.name,
+            exit_code,
+            (r or "")[:200],
         )
         return f"重启 V2Ray 失败: {(r or '')[:200]}"
     logger.info(
         "同步用户到节点成功: node=%s clients=%s",
-        node.name, len(clients),
+        node.name,
+        len(clients),
     )
     return None

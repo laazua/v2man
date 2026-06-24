@@ -9,4 +9,7 @@ RUN uv sync --frozen
 
 COPY app/ .
 
+RUN groupadd -r django && useradd -r -g django django && chown -R django:django /app
+USER django
+
 CMD ["uv", "run", "manage.py", "run_scheduler"]

@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0007_alter_node_config_path'),
+        ("nodes", "0007_alter_node_config_path"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='node',
-            name='deployed_at',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='最后部署时间'),
+            model_name="node",
+            name="deployed_at",
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="最后部署时间"
+            ),
         ),
     ]

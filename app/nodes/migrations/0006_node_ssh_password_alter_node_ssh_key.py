@@ -6,18 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0005_node_reload_cmd_alter_node_config_path'),
+        ("nodes", "0005_node_reload_cmd_alter_node_config_path"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='node',
-            name='ssh_password',
-            field=models.CharField(blank=True, help_text='密码认证，与私钥二选一', max_length=256, verbose_name='SSH 密码'),
+            model_name="node",
+            name="ssh_password",
+            field=models.CharField(
+                blank=True,
+                help_text="密码认证，与私钥二选一",
+                max_length=256,
+                verbose_name="SSH 密码",
+            ),
         ),
         migrations.AlterField(
-            model_name='node',
-            name='ssh_key',
-            field=models.TextField(blank=True, help_text='私钥认证，与密码二选一', verbose_name='SSH 私钥'),
+            model_name="node",
+            name="ssh_key",
+            field=models.TextField(
+                blank=True,
+                help_text="私钥认证，与密码二选一",
+                verbose_name="SSH 私钥",
+            ),
         ),
     ]

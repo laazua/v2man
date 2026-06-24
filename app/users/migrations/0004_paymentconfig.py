@@ -6,20 +6,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0003_remove_user_subscribe_url_alter_recharge_status_and_more'),
+        (
+            "users",
+            "0003_remove_user_subscribe_url_alter_recharge_status_and_more",
+        ),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PaymentConfig',
+            name="PaymentConfig",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('qr_code', models.ImageField(upload_to='payment/', verbose_name='支付宝收款码')),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "qr_code",
+                    models.ImageField(
+                        upload_to="payment/", verbose_name="支付宝收款码"
+                    ),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': '支付配置',
-                'db_table': 'payment_config',
+                "verbose_name": "支付配置",
+                "db_table": "payment_config",
             },
         ),
     ]

@@ -6,33 +6,45 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0003_alter_node_is_active'),
+        ("nodes", "0003_alter_node_is_active"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='node',
-            name='config_path',
-            field=models.CharField(default='/etc/v2ray/config.json', max_length=512, verbose_name='V2Ray 配置路径'),
+            model_name="node",
+            name="config_path",
+            field=models.CharField(
+                default="/etc/v2ray/config.json",
+                max_length=512,
+                verbose_name="V2Ray 配置路径",
+            ),
         ),
         migrations.AddField(
-            model_name='node',
-            name='ssh_host',
-            field=models.CharField(blank=True, max_length=256, verbose_name='SSH 地址'),
+            model_name="node",
+            name="ssh_host",
+            field=models.CharField(
+                blank=True, max_length=256, verbose_name="SSH 地址"
+            ),
         ),
         migrations.AddField(
-            model_name='node',
-            name='ssh_key',
-            field=models.TextField(blank=True, help_text='用于面板 SSH 连接节点执行配置同步', verbose_name='SSH 私钥'),
+            model_name="node",
+            name="ssh_key",
+            field=models.TextField(
+                blank=True,
+                help_text="用于面板 SSH 连接节点执行配置同步",
+                verbose_name="SSH 私钥",
+            ),
         ),
         migrations.AddField(
-            model_name='node',
-            name='ssh_port',
-            field=models.IntegerField(default=22, verbose_name='SSH 端口'),
+            model_name="node",
+            name="ssh_port",
+            field=models.IntegerField(default=22, verbose_name="SSH 端口"),
         ),
         migrations.AddField(
-            model_name='node',
-            name='ssh_user',
-            field=models.CharField(default='root', max_length=64, verbose_name='SSH 用户'),
+            model_name="node",
+            name="ssh_user",
+            field=models.CharField(
+                default="root", max_length=64, verbose_name="SSH 用户"
+            ),
         ),
     ]

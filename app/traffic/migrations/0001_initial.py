@@ -7,23 +7,46 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='TrafficLog',
+            name="TrafficLog",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('upload_bytes', models.BigIntegerField(default=0, verbose_name='上传字节')),
-                ('download_bytes', models.BigIntegerField(default=0, verbose_name='下载字节')),
-                ('recorded_at', models.DateTimeField(auto_now_add=True, verbose_name='记录时间')),
-                ('node_name', models.CharField(blank=True, max_length=128, verbose_name='节点名称')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "upload_bytes",
+                    models.BigIntegerField(default=0, verbose_name="上传字节"),
+                ),
+                (
+                    "download_bytes",
+                    models.BigIntegerField(default=0, verbose_name="下载字节"),
+                ),
+                (
+                    "recorded_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="记录时间"
+                    ),
+                ),
+                (
+                    "node_name",
+                    models.CharField(
+                        blank=True, max_length=128, verbose_name="节点名称"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '流量日志',
-                'db_table': 'traffic_logs',
-                'ordering': ['-recorded_at'],
+                "verbose_name": "流量日志",
+                "db_table": "traffic_logs",
+                "ordering": ["-recorded_at"],
             },
         ),
     ]

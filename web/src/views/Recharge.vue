@@ -23,7 +23,7 @@ const history = ref<RechargeRecord[]>([])
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/payment/mode/')
+    const { data } = await api.get('/auth/payment/mode/')
     mode.value = data.recharge_mode
   } catch {
     // fallback to manual
@@ -79,7 +79,7 @@ async function createPayment() {
   message.value = ''
   currentOrder.value = null
   try {
-    const { data } = await api.post('/payment/create/', { amount: amount.value * 100 })
+    const { data } = await api.post('/auth/payment/create/', { amount: amount.value * 100 })
     currentOrder.value = data
     alipayQrCode.value = data.qr_code || ''
     step.value = 'paying'
@@ -94,7 +94,7 @@ async function simulatePay() {
   if (!currentOrder.value) return
   loading.value = true
   try {
-    const { data } = await api.post('/payment/notify/', {
+    const { data } = await api.post('/auth/payment/notify/', {
       out_trade_no: currentOrder.value.out_trade_no,
     })
     message.value = data.message
@@ -116,11 +116,22 @@ function resetAuto() {
 
 <template>
   <div class="recharge-page">
-    <h2>充值</h2>
+    <div class="page-header">
+      <h2>充值</h2>
+      <span :class="['mode-badge', mode]">{{ mode === 'manual' ? '手动审核' : '自动到账' }}</span>
+    </div>
     <div class="content">
 
       <!-- ============ 手动模式 ============ -->
       <template v-if="mode === 'manual'">
+        <div class="flow-steps">
+          <div class="step"><span class="step-num">1</span><span>扫码付款</span></div>
+          <div class="step-arrow">→</div>
+          <div class="step"><span class="step-num">2</span><span>提交金额</span></div>
+          <div class="step-arrow">→</div>
+          <div class="step"><span class="step-num">3</span><span>等待审核</span></div>
+        </div>
+
         <div class="qr-section">
           <h3>请使用支付宝扫码付款</h3>
           <div v-if="hasQr" class="qr-image">
@@ -139,20 +150,28 @@ function resetAuto() {
             <span class="prefix">¥</span>
             <input v-model.number="amount" type="number" min="1" placeholder="输入金额" />
           </div>
-          <button @click="submitRecharge" :disabled="loading || amount < 1">
+          <button @click="submitRecharge" :disabled="loading || amount < 1" class="btn-manual">
             {{ loading ? '提交中...' : '提交充值' }}
           </button>
           <p v-if="message" class="message">{{ message }}</p>
         </div>
 
-        <div class="info-section">
-          <p>管理员确认到账后，余额将自动更新</p>
-          <p>如长时间未到账，请<router-link to="/contact">联系管理员</router-link></p>
+        <div class="info-section manual-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>管理员确认到账后，余额将自动更新。如长时间未到账，请<router-link to="/contact">联系管理员</router-link></span>
         </div>
       </template>
 
       <!-- ============ 自动模式 ============ -->
       <template v-else>
+        <div class="flow-steps auto-flow">
+          <div class="step"><span class="step-num">1</span><span>输入金额</span></div>
+          <div class="step-arrow">→</div>
+          <div class="step"><span class="step-num">2</span><span>扫码支付</span></div>
+          <div class="step-arrow">→</div>
+          <div class="step"><span class="step-num">3</span><span>自动到账</span></div>
+        </div>
+
         <!-- 步骤1：填金额 -->
         <div v-if="step === 'form'" class="form-section">
           <h3>充值金额</h3>
@@ -161,7 +180,7 @@ function resetAuto() {
             <span class="prefix">¥</span>
             <input v-model.number="amount" type="number" min="1" placeholder="输入金额" />
           </div>
-          <button @click="createPayment" :disabled="loading || amount < 1">
+          <button @click="createPayment" :disabled="loading || amount < 1" class="btn-auto">
             {{ loading ? '创建中...' : '去支付' }}
           </button>
           <p v-if="message" class="message error">{{ message }}</p>
@@ -174,14 +193,12 @@ function resetAuto() {
             <div class="pay-order-no">订单号: {{ currentOrder.out_trade_no }}</div>
           </div>
 
-          <!-- 支付宝当面付：显示动态二维码 -->
           <div v-if="alipayQrCode" class="alipay-qr-box">
             <p class="qr-desc">请使用支付宝扫码支付</p>
-            <div class="qr-code-image" v-html="alipayQrCode"></div>
+            <div class="qr-code-image"><img :src="alipayQrCode" alt="支付宝支付二维码" /></div>
             <p class="qr-hint">扫描上方二维码完成支付，系统将自动到账</p>
           </div>
 
-          <!-- 模拟驱动：显示模拟支付按钮 -->
           <div v-else class="simulate-box">
             <div class="simulate-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" color="#2563eb"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -201,6 +218,11 @@ function resetAuto() {
           </div>
           <p class="done-text">{{ message || '充值成功' }}</p>
           <button @click="resetAuto" class="btn-again">继续充值</button>
+        </div>
+
+        <div class="info-section auto-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>付款后系统自动到账，无需等待人工审核</span>
         </div>
       </template>
 
@@ -226,8 +248,19 @@ function resetAuto() {
 </template>
 
 <style scoped>
-h2 { margin-bottom: 1.5rem; }
-.content { display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.page-header h2 { margin: 0; }
+.mode-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; }
+.mode-badge.manual { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.mode-badge.auto { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+
+.flow-steps { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem 1.25rem; background: var(--bg-card); backdrop-filter: blur(12px); border-radius: var(--radius); border: 1px solid var(--border); }
+.flow-steps.auto-flow .step-num { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.step { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-secondary); }
+.step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+.step-arrow { color: var(--border); font-size: 0.85rem; }
+
+.content { display: flex; flex-direction: column; gap: 1.25rem; max-width: 500px; }
 .qr-section, .form-section, .paying-section, .done-section, .info-section { background: var(--bg-card); backdrop-filter: blur(12px); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); }
 .qr-image { width: 200px; margin: 1rem auto; }
 .qr-image img { width: 100%; height: auto; border-radius: var(--radius-sm); }
@@ -239,12 +272,18 @@ h2 { margin-bottom: 1.5rem; }
 .amount-input input { flex: 1; padding: 0.75rem; font-size: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.2s; }
 .amount-input input:focus { border-color: var(--accent); }
 
-button { width: 100%; padding: 0.75rem; background: var(--accent-gradient); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+button { width: 100%; padding: 0.75rem; color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-manual { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.btn-manual:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+.btn-auto { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.btn-auto:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
 .message { margin-top: 0.75rem; color: var(--success); text-align: center; }
 .message.error { color: var(--danger); }
-.info-section { text-align: center; color: var(--text-muted); font-size: 0.875rem; line-height: 1.8; }
+.info-section { display: flex; align-items: center; gap: 0.5rem; justify-content: center; color: var(--text-muted); font-size: 0.825rem; line-height: 1.5; padding: 0.875rem 1.25rem; }
+.info-section svg { flex-shrink: 0; opacity: 0.6; }
+.manual-info { border-color: rgba(245,158,11,0.2); }
+.auto-info { border-color: rgba(34,197,94,0.2); }
 .info-section a { color: var(--accent); text-decoration: none; font-weight: 500; }
 .info-section a:hover { text-decoration: underline; }
 
@@ -263,12 +302,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .alipay-qr-box { text-align: center; padding: 1.5rem 0; }
 .qr-desc { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; }
 .qr-code-image { display: inline-block; padding: 1rem; background: #fff; border-radius: 8px; margin-bottom: 1rem; }
+.qr-code-image img { max-width: 200px; height: auto; display: block; margin: 0 auto; }
 .qr-hint { font-size: 0.8rem; color: var(--text-muted); }
 
 .done-section { text-align: center; }
 .done-icon { margin-bottom: 1rem; }
 .done-text { font-size: 1.1rem; font-weight: 500; color: var(--success); margin-bottom: 1.25rem; }
-.btn-again { max-width: 200px; margin: 0 auto; }
+.btn-again { max-width: 200px; margin: 0 auto; background: var(--accent-gradient); }
+.btn-again:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
 
 /* 充值记录 */
 .history-section { background: var(--bg-card); backdrop-filter: blur(12px); padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); }

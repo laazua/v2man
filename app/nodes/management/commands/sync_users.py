@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from nodes.models import Node
 from nodes.ssh_utils import sync_users_to_node
 
-logger = logging.getLogger('business')
+logger = logging.getLogger("business")
 
 
 class Command(BaseCommand):
@@ -19,7 +19,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser: Any) -> None:
         """添加命令行参数。"""
         parser.add_argument(
-            "--node", type=str,
+            "--node",
+            type=str,
             help="只同步指定节点 (name)",
         )
 
@@ -36,18 +37,12 @@ class Command(BaseCommand):
         ok = 0
         fail = 0
         for node in qs:
-            self.stdout.write(
-                f"[{node.name}] 同步用户... ", ending=""
-            )
+            self.stdout.write(f"[{node.name}] 同步用户... ", ending="")
             err = sync_users_to_node(node)
             if err:
-                self.stderr.write(self.style.ERROR(
-                    f"失败: {err}"
-                ))
+                self.stderr.write(self.style.ERROR(f"失败: {err}"))
                 fail += 1
             else:
                 self.stdout.write(self.style.SUCCESS("OK"))
                 ok += 1
-        logger.info(
-            '定时同步用户完成: 成功=%s 失败=%s', ok, fail
-        )
+        logger.info("定时同步用户完成: 成功=%s 失败=%s", ok, fail)

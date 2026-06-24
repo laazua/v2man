@@ -3,8 +3,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from users.models import User
 from notify.models import Notification, NotificationRead
+from users.models import User
 
 
 class NotificationListViewTest(TestCase):
@@ -13,7 +13,8 @@ class NotificationListViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="notify-user", password="test123",
+            username="notify-user",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         self.notification = Notification.objects.create(
@@ -21,7 +22,8 @@ class NotificationListViewTest(TestCase):
             content="Test content",
         )
         Notification.objects.create(
-            title="Inactive", content="Should not appear",
+            title="Inactive",
+            content="Should not appear",
             is_active=False,
         )
 
@@ -41,7 +43,8 @@ class NotificationListViewTest(TestCase):
 
     def test_is_read_true_after_marking(self):
         NotificationRead.objects.create(
-            user=self.user, notification=self.notification,
+            user=self.user,
+            notification=self.notification,
         )
         resp = self.client.get("/api/notifications/")
         self.assertTrue(resp.data[0]["is_read"])
@@ -53,7 +56,8 @@ class UnreadCountViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="count-user", password="test123",
+            username="count-user",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
 
@@ -67,7 +71,8 @@ class UnreadCountViewTest(TestCase):
         n1 = Notification.objects.create(title="N1", content="C1")
         Notification.objects.create(title="N2", content="C2")
         NotificationRead.objects.create(
-            user=self.user, notification=n1,
+            user=self.user,
+            notification=n1,
         )
         resp = self.client.get("/api/notifications/unread-count/")
         self.assertEqual(resp.data["unread"], 1)
@@ -83,7 +88,8 @@ class MarkReadViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="mark-user", password="test123",
+            username="mark-user",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         self.n1 = Notification.objects.create(title="N1", content="C1")
@@ -97,12 +103,14 @@ class MarkReadViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
             NotificationRead.objects.filter(
-                user=self.user, notification=self.n1,
+                user=self.user,
+                notification=self.n1,
             ).exists(),
         )
         self.assertFalse(
             NotificationRead.objects.filter(
-                user=self.user, notification=self.n2,
+                user=self.user,
+                notification=self.n2,
             ).exists(),
         )
 
@@ -112,7 +120,8 @@ class MarkReadViewTest(TestCase):
         self.assertEqual(
             NotificationRead.objects.filter(
                 user=self.user,
-            ).count(), 2,
+            ).count(),
+            2,
         )
 
     def test_mark_single_twice_no_error(self):
@@ -127,8 +136,10 @@ class MarkReadViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             NotificationRead.objects.filter(
-                user=self.user, notification=self.n1,
-            ).count(), 1,
+                user=self.user,
+                notification=self.n1,
+            ).count(),
+            1,
         )
 
     def test_mark_nonexistent_notification(self):
@@ -145,10 +156,12 @@ class AdminNotificationListCreateViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_superuser(
-            username="notify-admin", password="test123",
+            username="notify-admin",
+            password="test123",
         )
         self.user = User.objects.create_user(
-            username="normal-user", password="test123",
+            username="normal-user",
+            password="test123",
         )
 
     def test_admin_list_notifications(self):
@@ -187,11 +200,13 @@ class AdminNotificationDetailViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_superuser(
-            username="notify-admin2", password="test123",
+            username="notify-admin2",
+            password="test123",
         )
         self.client.force_authenticate(user=self.admin)
         self.notification = Notification.objects.create(
-            title="Detail Test", content="Detail content",
+            title="Detail Test",
+            content="Detail content",
         )
 
     def test_get_detail(self):

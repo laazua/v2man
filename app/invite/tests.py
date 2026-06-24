@@ -3,9 +3,9 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from invite.models import InviteCode, Referral, SystemSetting, Withdrawal
 from users.models import User
 from users.wallet import Wallet
-from invite.models import InviteCode, Referral, Withdrawal, SystemSetting
 
 
 class GenerateInviteCodeViewTest(TestCase):
@@ -14,7 +14,8 @@ class GenerateInviteCodeViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="inviter", password="test123",
+            username="inviter",
+            password="test123",
         )
 
     def test_generate_code(self):
@@ -37,7 +38,8 @@ class ListInviteCodesViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="inviter2", password="test123",
+            username="inviter2",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         InviteCode.objects.create(owner=self.user)
@@ -50,7 +52,8 @@ class ListInviteCodesViewTest(TestCase):
 
     def test_other_user_codes_not_included(self):
         other = User.objects.create_user(
-            username="other", password="test123",
+            username="other",
+            password="test123",
         )
         InviteCode.objects.create(owner=other)
         resp = self.client.get("/api/invite/codes/")
@@ -63,16 +66,20 @@ class ListReferralsViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="inviter3", password="test123",
+            username="inviter3",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         self.invited = User.objects.create_user(
-            username="invited1", password="test123",
+            username="invited1",
+            password="test123",
         )
         code = InviteCode.objects.create(owner=self.user)
         Referral.objects.create(
-            inviter=self.user, invited=self.invited,
-            invite_code=code, earned=500,
+            inviter=self.user,
+            invited=self.invited,
+            invite_code=code,
+            earned=500,
         )
 
     def test_list_referrals(self):
@@ -89,7 +96,8 @@ class EarningsViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="earner", password="test123",
+            username="earner",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
 
@@ -101,10 +109,13 @@ class EarningsViewTest(TestCase):
 
     def test_earnings_with_referrals(self):
         invited = User.objects.create_user(
-            username="ref", password="test123",
+            username="ref",
+            password="test123",
         )
         Referral.objects.create(
-            inviter=self.user, invited=invited, earned=1000,
+            inviter=self.user,
+            invited=invited,
+            earned=1000,
         )
         resp = self.client.get("/api/invite/earnings/")
         self.assertEqual(resp.data["total_earned"], 1000)
@@ -118,7 +129,8 @@ class CreateWithdrawalViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="withdrawer", password="test123",
+            username="withdrawer",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         self.wallet = Wallet.objects.get(user=self.user)
@@ -135,7 +147,8 @@ class CreateWithdrawalViewTest(TestCase):
         self.assertEqual(self.wallet.balance, 5000)
         self.assertTrue(
             Withdrawal.objects.filter(
-                user=self.user, amount=5000,
+                user=self.user,
+                amount=5000,
             ).exists(),
         )
 
@@ -179,7 +192,8 @@ class ListWithdrawalsViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="wd-user", password="test123",
+            username="wd-user",
+            password="test123",
         )
         self.client.force_authenticate(user=self.user)
         Withdrawal.objects.create(user=self.user, amount=3000)
@@ -197,10 +211,13 @@ class SettingsViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_user(
-            username="admin", password="test123", is_staff=True,
+            username="admin",
+            password="test123",
+            is_staff=True,
         )
         self.user = User.objects.create_user(
-            username="normal", password="test123",
+            username="normal",
+            password="test123",
         )
 
     def test_admin_get_settings(self):
@@ -221,10 +238,12 @@ class SettingsViewTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            SystemSetting.get("referral_percentage"), "30",
+            SystemSetting.get("referral_percentage"),
+            "30",
         )
         self.assertEqual(
-            SystemSetting.get_int("withdrawal_min"), 5000,
+            SystemSetting.get_int("withdrawal_min"),
+            5000,
         )
 
     def test_non_admin_cannot_access(self):
@@ -247,11 +266,13 @@ class AdminWithdrawalListViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_superuser(
-            username="admin2", password="test123",
+            username="admin2",
+            password="test123",
         )
         self.client.force_authenticate(user=self.admin)
         user = User.objects.create_user(
-            username="wd-user2", password="test123",
+            username="wd-user2",
+            password="test123",
         )
         Withdrawal.objects.create(user=user, amount=5000)
 
@@ -267,23 +288,25 @@ class AdminWithdrawalActionViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_superuser(
-            username="admin3", password="test123",
+            username="admin3",
+            password="test123",
         )
         self.client.force_authenticate(user=self.admin)
         self.user = User.objects.create_user(
-            username="wd-user3", password="test123",
+            username="wd-user3",
+            password="test123",
         )
         self.wallet = Wallet.objects.get(user=self.user)
         self.wallet.balance = 10000
         self.wallet.save()
         self.withdrawal = Withdrawal.objects.create(
-            user=self.user, amount=5000,
+            user=self.user,
+            amount=5000,
         )
 
     def test_approve_withdrawal(self):
         resp = self.client.post(
-            f"/api/admin/invite/withdrawals/"
-            f"{self.withdrawal.id}/action/",
+            f"/api/admin/invite/withdrawals/" f"{self.withdrawal.id}/action/",
             {"action": "approve"},
         )
         self.assertEqual(resp.status_code, 200)
@@ -292,8 +315,7 @@ class AdminWithdrawalActionViewTest(TestCase):
 
     def test_reject_withdrawal_refunds(self):
         resp = self.client.post(
-            f"/api/admin/invite/withdrawals/"
-            f"{self.withdrawal.id}/action/",
+            f"/api/admin/invite/withdrawals/" f"{self.withdrawal.id}/action/",
             {"action": "reject"},
         )
         self.assertEqual(resp.status_code, 200)
@@ -304,8 +326,7 @@ class AdminWithdrawalActionViewTest(TestCase):
 
     def test_invalid_action(self):
         resp = self.client.post(
-            f"/api/admin/invite/withdrawals/"
-            f"{self.withdrawal.id}/action/",
+            f"/api/admin/invite/withdrawals/" f"{self.withdrawal.id}/action/",
             {"action": "invalid"},
         )
         self.assertEqual(resp.status_code, 400)
@@ -314,8 +335,7 @@ class AdminWithdrawalActionViewTest(TestCase):
         self.withdrawal.status = "approved"
         self.withdrawal.save()
         resp = self.client.post(
-            f"/api/admin/invite/withdrawals/"
-            f"{self.withdrawal.id}/action/",
+            f"/api/admin/invite/withdrawals/" f"{self.withdrawal.id}/action/",
             {"action": "reject"},
         )
         self.assertEqual(resp.status_code, 404)
