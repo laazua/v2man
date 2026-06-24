@@ -38,12 +38,19 @@ api.interceptors.response.use(
     const originalRequest = error.config
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
+      // 未携带 Authorization 的请求（如登录、注册）不需要刷新 token
+      const authHeader = originalRequest.headers?.Authorization
+      if (!authHeader) {
+        return Promise.reject(error)
+      }
       const refresh = localStorage.getItem('refresh_token')
       if (!refresh) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         accessToken = null
-        window.location.href = '/login'
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login'
+        }
         return Promise.reject(error)
       }
       if (isRefreshing) {
@@ -67,7 +74,9 @@ api.interceptors.response.use(
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         accessToken = null
-        window.location.href = '/login'
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login'
+        }
         return Promise.reject(err)
       } finally {
         isRefreshing = false
