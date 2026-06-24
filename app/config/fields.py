@@ -17,7 +17,7 @@ class EncryptedCharField(models.CharField):
 
     def __init__(self, *args, max_length: int = 512, **kwargs) -> None:
         """Initialize with a default max_length of 512."""
-        kwargs.setdefault('max_length', max_length)
+        kwargs.setdefault("max_length", max_length)
         super().__init__(*args, **kwargs)
 
     @staticmethod
@@ -41,7 +41,7 @@ class EncryptedCharField(models.CharField):
 
     def get_prep_value(self, value: str | None) -> str | None:
         """Encrypt value before saving to the database."""
-        if value is None or value == '':
+        if value is None or value == "":
             return value
         if self._is_encrypted(value):
             return value

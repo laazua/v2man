@@ -10,8 +10,11 @@ class TrafficLogAdmin(admin.ModelAdmin):
     """Admin interface for viewing TrafficLog records."""
 
     list_display = [
-        "user", "upload_bytes", "download_bytes",
-        "recorded_at", "node_name",
+        "user",
+        "upload_bytes",
+        "download_bytes",
+        "recorded_at",
+        "node_name",
     ]
     list_filter = ["recorded_at"]
     date_hierarchy = "recorded_at"

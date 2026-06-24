@@ -42,17 +42,21 @@ SECRET_KEY=your-very-long-random-secret-key
 # 生产关闭 DEBUG
 DEBUG=False
 
-# 数据库（默认 SQLite，生产推荐 PostgreSQL）
-DATABASE_URL=postgres://user:password@localhost:5432/v2man
-
 # 允许访问的域名（逗号分隔）
 ALLOWED_HOSTS=v2man.example.com
 
-# CORS 跨域
-CORS_ALLOWED_ORIGINS=https://v2man.example.com
+# 数据库（默认 SQLite，生产推荐 PostgreSQL）
+DATABASE_URL=postgres://user:password@localhost:5432/v2man
 
 # 静态文件目录
 STATIC_ROOT=/opt/v2man/app/staticfiles
+
+# 前端地址（密码重置等邮件中的跳转链接）
+FRONTEND_URL=https://v2man.example.com
+
+# 跨域
+CORS_ALLOWED_ORIGINS=https://v2man.example.com
+CSRF_TRUSTED_ORIGINS=https://v2man.example.com
 
 # JWT 过期时间
 JWT_ACCESS_MINUTES=60
@@ -144,9 +148,28 @@ npm run dev
 将 `nginx.conf` 中的 `proxy_pass` 地址改为后端实际地址，`root` 指向前端构建目录：
 
 ```nginx
+# --- 安全响应头 ---
+add_header X-Frame-Options "SAMEORIGIN" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'" always;
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# --- 速率限制（登录端点，防暴力破解） ---
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+
 server {
     listen 80;
     server_name v2man.example.com;
+
+    location /api/auth/login/ {
+        limit_req zone=login burst=3 nodelay;
+        proxy_pass http://127.0.0.1:8055;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     location /api/ {
         proxy_pass http://127.0.0.1:8055;       # Django 后端

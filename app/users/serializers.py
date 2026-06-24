@@ -11,16 +11,18 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, min_length=8)
     invite_code = serializers.CharField(
-        write_only=True, required=False, allow_blank=True,
+        write_only=True,
+        required=False,
+        allow_blank=True,
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'invite_code']
+        fields = ["username", "email", "password", "invite_code"]
 
     def create(self, validated_data):
         """Create a new user, removing invite_code from validated data."""
-        validated_data.pop('invite_code', None)
+        validated_data.pop("invite_code", None)
         return User.objects.create_user(**validated_data)
 
 
@@ -28,21 +30,31 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile with plan name and balance."""
 
     plan_name = serializers.CharField(
-        source='plan.name', read_only=True, default=None,
+        source="plan.name",
+        read_only=True,
+        default=None,
     )
     balance = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'uuid', 'plan_name', 'balance',
-            'traffic_used', 'traffic_total', 'expire_date', 'date_joined',
-            'is_staff',
+            "id",
+            "username",
+            "email",
+            "uuid",
+            "plan_name",
+            "balance",
+            "traffic_used",
+            "traffic_total",
+            "expire_date",
+            "date_joined",
+            "is_staff",
         ]
 
     def get_balance(self, obj):
         """Return the user's wallet balance or 0 if not available."""
-        wallet = getattr(obj, 'wallet', None)
+        wallet = getattr(obj, "wallet", None)
         if wallet is not None:
             return wallet.balance
         return 0
@@ -51,13 +63,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class RechargeSerializer(serializers.ModelSerializer):
     """Serializer for recharge records."""
 
-    username = serializers.CharField(source='user.username', read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Recharge
         fields = [
-            'id', 'user', 'username', 'amount', 'status', 'admin_remark',
-            'created_at', 'confirmed_at',
+            "id",
+            "user",
+            "username",
+            "amount",
+            "status",
+            "admin_remark",
+            "created_at",
+            "confirmed_at",
         ]
 
 
@@ -67,12 +85,21 @@ class PaymentOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentOrder
         fields = [
-            'id', 'amount', 'out_trade_no', 'trade_no', 'status',
-            'created_at', 'paid_at',
+            "id",
+            "amount",
+            "out_trade_no",
+            "trade_no",
+            "status",
+            "created_at",
+            "paid_at",
         ]
         read_only_fields = [
-            'id', 'out_trade_no', 'trade_no', 'status', 'created_at',
-            'paid_at',
+            "id",
+            "out_trade_no",
+            "trade_no",
+            "status",
+            "created_at",
+            "paid_at",
         ]
 
 

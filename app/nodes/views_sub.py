@@ -8,10 +8,10 @@ from typing import Optional, Union
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
 
 from .models import Node
 from .subscription import Subscription
@@ -24,12 +24,9 @@ def _build_v2ray_link(node: Node, user_uuid: str = "") -> str:
     uid: str = user_uuid or node.config.get("id", "")
     if node.protocol == "vless":
         params: dict = node.config or {}
-        query: str = "&".join(
-            f"{k}={v}" for k, v in params.items() if v != ""
-        )
+        query: str = "&".join(f"{k}={v}" for k, v in params.items() if v != "")
         return (
-            f"vless://{uid}@{node.address}:{node.port}"
-            f"?{query}#{node.name}"
+            f"vless://{uid}@{node.address}:{node.port}" f"?{query}#{node.name}"
         )
     elif node.protocol == "vmess":
         v: dict[str, str] = {
@@ -53,16 +50,11 @@ def _build_v2ray_link(node: Node, user_uuid: str = "") -> str:
         ).decode()
         return f"vmess://{encoded}"
     elif node.protocol == "shadowsocks":
-        method: str = node.config.get(
-            "method", "chacha20-ietf-poly1305"
-        )
+        method: str = node.config.get("method", "chacha20-ietf-poly1305")
         password: str = node.config.get("password", "")
         raw: str = f"{method}:{password}"
         encoded = base64.b64encode(raw.encode()).decode()
-        return (
-            f"ss://{encoded}@{node.address}:{node.port}"
-            f"#{node.name}"
-        )
+        return f"ss://{encoded}@{node.address}:{node.port}" f"#{node.name}"
     elif node.protocol == "trojan":
         password = node.config.get("password", "")
         sni: str = node.config.get("sni", node.address)
@@ -115,9 +107,7 @@ def _generate_clash(nodes: list[Node], user_uuid: str = "") -> str:
             lines.append(f"    port: {node.port}")
             lines.append(f"    uuid: {uid}")
             lines.append(f"    flow: {flow}")
-            tls: str = (
-                "true" if node.config.get("tls") else "false"
-            )
+            tls: str = "true" if node.config.get("tls") else "false"
             lines.append(f"    tls: {tls}")
             lines.append("    skip-cert-verify: true")
             lines.append("    udp: true")
@@ -127,18 +117,10 @@ def _generate_clash(nodes: list[Node], user_uuid: str = "") -> str:
             lines.append(f"    server: {node.address}")
             lines.append(f"    port: {node.port}")
             lines.append(f"    uuid: {uid}")
-            lines.append(
-                f"    alterId: {node.config.get('aid', '0')}"
-            )
-            lines.append(
-                f"    cipher: {node.config.get('scy', 'auto')}"
-            )
-            lines.append(
-                f"    network: {node.config.get('net', 'tcp')}"
-            )
-            tls = (
-                "true" if node.config.get("tls") else "false"
-            )
+            lines.append(f"    alterId: {node.config.get('aid', '0')}")
+            lines.append(f"    cipher: {node.config.get('scy', 'auto')}")
+            lines.append(f"    network: {node.config.get('net', 'tcp')}")
+            tls = "true" if node.config.get("tls") else "false"
             lines.append(f"    tls: {tls}")
             lines.append("    skip-cert-verify: true")
             lines.append("    udp: true")
@@ -151,20 +133,14 @@ def _generate_clash(nodes: list[Node], user_uuid: str = "") -> str:
                 "    cipher:"
                 f" {node.config.get('method', 'chacha20-ietf-poly1305')}"
             )
-            lines.append(
-                f"    password: {node.config.get('password', '')}"
-            )
+            lines.append(f"    password: {node.config.get('password', '')}")
         elif node.protocol == "trojan":
             lines.append(f"  - name: {node.name}")
             lines.append("    type: trojan")
             lines.append(f"    server: {node.address}")
             lines.append(f"    port: {node.port}")
-            lines.append(
-                f"    password: {node.config.get('password', '')}"
-            )
-            lines.append(
-                f"    sni: {node.config.get('sni', node.address)}"
-            )
+            lines.append(f"    password: {node.config.get('password', '')}")
+            lines.append(f"    sni: {node.config.get('sni', node.address)}")
             lines.append("    skip-cert-verify: true")
             lines.append("    udp: true")
         elif node.protocol == "hysteria2":
@@ -172,12 +148,8 @@ def _generate_clash(nodes: list[Node], user_uuid: str = "") -> str:
             lines.append("    type: hysteria2")
             lines.append(f"    server: {node.address}")
             lines.append(f"    port: {node.port}")
-            lines.append(
-                f"    password: {node.config.get('password', '')}"
-            )
-            lines.append(
-                f"    sni: {node.config.get('sni', node.address)}"
-            )
+            lines.append(f"    password: {node.config.get('password', '')}")
+            lines.append(f"    sni: {node.config.get('sni', node.address)}")
             lines.append("    skip-cert-verify: true")
             lines.append("    udp: true")
     return "\n".join(lines)
@@ -190,69 +162,73 @@ def _generate_singbox(nodes: list[Node], user_uuid: str = "") -> str:
         uid: str = user_uuid or node.config.get("id", "")
         tag: str = node.name
         if node.protocol == "vless":
-            outbounds.append({
-                "type": "vless",
-                "tag": tag,
-                "server": node.address,
-                "server_port": node.port,
-                "uuid": uid,
-                "flow": node.config.get("flow", ""),
-                "tls": {
-                    "enabled": bool(node.config.get("tls", False)),
-                },
-            })
+            outbounds.append(
+                {
+                    "type": "vless",
+                    "tag": tag,
+                    "server": node.address,
+                    "server_port": node.port,
+                    "uuid": uid,
+                    "flow": node.config.get("flow", ""),
+                    "tls": {
+                        "enabled": bool(node.config.get("tls", False)),
+                    },
+                }
+            )
         elif node.protocol == "vmess":
-            outbounds.append({
-                "type": "vmess",
-                "tag": tag,
-                "server": node.address,
-                "server_port": node.port,
-                "uuid": uid,
-                "alter_id": int(node.config.get("aid", "0")),
-                "security": node.config.get("scy", "auto"),
-            })
+            outbounds.append(
+                {
+                    "type": "vmess",
+                    "tag": tag,
+                    "server": node.address,
+                    "server_port": node.port,
+                    "uuid": uid,
+                    "alter_id": int(node.config.get("aid", "0")),
+                    "security": node.config.get("scy", "auto"),
+                }
+            )
         elif node.protocol == "shadowsocks":
-            outbounds.append({
-                "type": "shadowsocks",
-                "tag": tag,
-                "server": node.address,
-                "server_port": node.port,
-                "method": node.config.get(
-                    "method", "chacha20-ietf-poly1305"
-                ),
-                "password": node.config.get("password", ""),
-            })
+            outbounds.append(
+                {
+                    "type": "shadowsocks",
+                    "tag": tag,
+                    "server": node.address,
+                    "server_port": node.port,
+                    "method": node.config.get(
+                        "method", "chacha20-ietf-poly1305"
+                    ),
+                    "password": node.config.get("password", ""),
+                }
+            )
         elif node.protocol == "trojan":
-            outbounds.append({
-                "type": "trojan",
-                "tag": tag,
-                "server": node.address,
-                "server_port": node.port,
-                "password": node.config.get("password", ""),
-                "tls": {
-                    "enabled": True,
-                    "server_name": node.config.get(
-                        "sni", node.address
-                    ),
-                },
-            })
+            outbounds.append(
+                {
+                    "type": "trojan",
+                    "tag": tag,
+                    "server": node.address,
+                    "server_port": node.port,
+                    "password": node.config.get("password", ""),
+                    "tls": {
+                        "enabled": True,
+                        "server_name": node.config.get("sni", node.address),
+                    },
+                }
+            )
         elif node.protocol == "hysteria2":
-            outbounds.append({
-                "type": "hysteria2",
-                "tag": tag,
-                "server": node.address,
-                "server_port": node.port,
-                "password": node.config.get("password", ""),
-                "tls": {
-                    "enabled": True,
-                    "server_name": node.config.get(
-                        "sni", node.address
-                    ),
-                },
-            })
-    return json.dumps(
-        {"outbounds": outbounds}, indent=2, ensure_ascii=False
-    )
+            outbounds.append(
+                {
+                    "type": "hysteria2",
+                    "tag": tag,
+                    "server": node.address,
+                    "server_port": node.port,
+                    "password": node.config.get("password", ""),
+                    "tls": {
+                        "enabled": True,
+                        "server_name": node.config.get("sni", node.address),
+                    },
+                }
+            )
+    return json.dumps({"outbounds": outbounds}, indent=2, ensure_ascii=False)
 
 
 class SubscriptionView(APIView):
@@ -267,14 +243,11 @@ class SubscriptionView(APIView):
         output_fmt: Optional[str] = None,
     ) -> Union[HttpResponse, Response]:
         """Serve subscription content based on format parameter."""
-        fmt: str = output_fmt or request.query_params.get(
-            "format", "base64"
-        )
+        fmt: str = output_fmt or request.query_params.get("format", "base64")
         try:
-            sub: Subscription = (
-                Subscription.objects.select_related("user")
-                .get(token=token)
-            )
+            sub: Subscription = Subscription.objects.select_related(
+                "user"
+            ).get(token=token)
         except Subscription.DoesNotExist:
             return Response(
                 {"error": "无效的订阅链接"},
@@ -296,28 +269,22 @@ class SubscriptionView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        nodes: list[Node] = list(
-            user.plan.nodes.filter(is_active=True)
-        )
+        nodes: list[Node] = list(user.plan.nodes.filter(is_active=True))
         user_uuid: str = str(user.uuid)
 
         logger.info(
             "订阅请求: user_id=%s format=%s nodes=%d",
-            user.id, fmt, len(nodes),
+            user.id,
+            fmt,
+            len(nodes),
         )
         if fmt == "clash":
             proxies: str = _generate_clash(nodes, user_uuid)
             content: str = f"proxies:\n{proxies}"
-            return HttpResponse(
-                content, content_type="application/yaml"
-            )
+            return HttpResponse(content, content_type="application/yaml")
         elif fmt == "singbox":
             content = _generate_singbox(nodes, user_uuid)
-            return HttpResponse(
-                content, content_type="application/json"
-            )
+            return HttpResponse(content, content_type="application/json")
         else:
             content = _generate_base64(nodes, user_uuid)
-            return HttpResponse(
-                content, content_type="text/plain"
-            )
+            return HttpResponse(content, content_type="text/plain")

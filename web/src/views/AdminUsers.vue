@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../api'
 import { copyText, copiedKey } from '../api/copy'
 
@@ -46,6 +46,8 @@ async function submitTopUp() {
   }
 }
 
+function onDocClick() { openMenuId.value = null }
+
 onMounted(async () => {
   const [u, p] = await Promise.all([
     api.get('/admin/users/'),
@@ -53,6 +55,11 @@ onMounted(async () => {
   ])
   users.value = u.data
   plans.value = p.data
+  document.addEventListener('click', onDocClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocClick)
 })
 
 function openEdit(u: User) {
@@ -96,9 +103,31 @@ function formatMB(mb: number) {
 }
 
 const confirmTarget = ref<User | null>(null)
+const deleteTarget = ref<User | null>(null)
 const showInvalidateDialog = ref(false)
 const invalidateResult = ref<any>(null)
 const syncingId = ref<number | null>(null)
+const openMenuId = ref<number | null>(null)
+const menuDirUp = ref(false)
+
+function toggleMenu(id: number, el?: EventTarget | null) {
+  if (openMenuId.value === id) {
+    openMenuId.value = null
+    return
+  }
+  openMenuId.value = id
+  if (el instanceof HTMLElement) {
+    const rect = el.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    menuDirUp.value = spaceBelow < 240
+  } else {
+    menuDirUp.value = false
+  }
+}
+
+function closeMenu() {
+  openMenuId.value = null
+}
 
 function invalidateSub(u: User) {
   confirmTarget.value = u
@@ -116,6 +145,24 @@ async function doInvalidate() {
     users.value = data
   } catch (e: any) {
     alert(e.response?.data?.error || '操作失败')
+  }
+}
+
+function confirmDelete(u: User) {
+  deleteTarget.value = u
+  openMenuId.value = null
+}
+
+async function doDelete() {
+  const u = deleteTarget.value
+  if (!u) return
+  deleteTarget.value = null
+  try {
+    await api.post(`/admin/users/${u.id}/destroy_user/`)
+    const { data } = await api.get('/admin/users/')
+    users.value = data
+  } catch (e: any) {
+    alert(e.response?.data?.error || '删除失败')
   }
 }
 
@@ -239,6 +286,20 @@ async function syncConfig(u: User) {
       </div>
     </div>
 
+    <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null">
+      <div class="modal invalidate-confirm">
+        <div class="confirm-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <h3>确认删除用户？</h3>
+        <p>将永久删除 <strong>{{ deleteTarget?.username }}</strong> 的所有数据，<br>包括钱包余额、套餐记录等，<strong>此操作不可恢复</strong>。</p>
+        <div class="confirm-actions">
+          <button @click="deleteTarget = null" class="btn-secondary">取消</button>
+          <button @click="doDelete" class="btn-solid-danger">确认删除</button>
+        </div>
+      </div>
+    </div>
+
     <div class="table-wrapper">
       <table class="data-table">
         <thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>UUID</th><th>套餐</th><th>余额</th><th>已用/总量</th><th>到期</th><th>状态</th><th>操作</th></tr></thead>
@@ -253,11 +314,33 @@ async function syncConfig(u: User) {
             <td>{{ formatMB(u.traffic_used) }} / {{ formatMB(u.traffic_total) }}</td>
             <td>{{ u.expire_date ? new Date(u.expire_date).toLocaleDateString('zh-CN') : '无' }}</td>
             <td><span :class="['badge', u.is_active !== false ? 'active' : 'inactive']">{{ u.is_active !== false ? '正常' : '停用' }}</span></td>
-            <td>
-              <button @click="openEdit(u)" class="btn-sm">编辑</button>
-              <button @click="openTopUp(u)" class="btn-sm btn-topup">充值</button>
-              <button @click="syncConfig(u)" :disabled="syncingId === u.id" class="btn-sm btn-sync">同步配置</button>
-              <button @click="invalidateSub(u)" class="btn-sm btn-danger">失效订阅</button>
+            <td class="action-cell">
+              <div :class="['dropdown-wrap', { dropup: openMenuId === u.id && menuDirUp }]">
+                <button @click.stop="toggleMenu(u.id, $event.target)" class="btn-more">···</button>
+                <div v-if="openMenuId === u.id" class="dropdown-menu" @click.stop>
+                  <button @click="openEdit(u); closeMenu()" class="dropdown-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    编辑
+                  </button>
+                  <button @click="openTopUp(u); closeMenu()" class="dropdown-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    充值
+                  </button>
+                  <button @click="syncConfig(u); closeMenu()" :disabled="syncingId === u.id" class="dropdown-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7"/><path d="M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    同步配置
+                  </button>
+                  <button @click="invalidateSub(u); closeMenu()" class="dropdown-item dropdown-danger">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    失效订阅
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button @click="confirmDelete(u)" class="dropdown-item dropdown-danger">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    删除用户
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
           <tr v-if="!users.length"><td colspan="10" class="empty">暂无数据</td></tr>
@@ -270,7 +353,7 @@ async function syncConfig(u: User) {
 <style scoped>
 .admin-page { max-width: 1000px; }
 header { margin-bottom: 1.5rem; }
-.table-wrapper { background: var(--bg-card); backdrop-filter: blur(12px); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.table-wrapper { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border); }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; }
 .data-table th { background: var(--bg-primary); color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); }
@@ -342,4 +425,16 @@ input:focus, select:focus { border-color: var(--accent); }
 .invalidate-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
 .error { color: var(--danger); font-size: 0.85rem; margin-bottom: 0.5rem; }
 .success { color: var(--success); font-size: 0.85rem; margin-bottom: 0.5rem; }
+.action-cell { position: relative; }
+.dropdown-wrap { position: relative; display: inline-block; }
+.dropup .dropdown-menu { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 4px; }
+.btn-more { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0.25rem 0.6rem; color: var(--text-muted); letter-spacing: 2px; transition: all 0.2s; }
+.btn-more:hover { background: var(--border-solid); color: var(--text-primary); }
+.dropdown-menu { position: absolute; right: 0; top: 100%; margin-top: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 50; min-width: 140px; padding: 0.35rem; backdrop-filter: blur(12px); }
+.dropdown-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--text-primary); font-size: 0.8rem; cursor: pointer; border-radius: 6px; text-align: left; transition: background 0.15s; }
+.dropdown-item:hover { background: var(--bg-hover); }
+.dropdown-item:disabled { opacity: 0.4; cursor: not-allowed; }
+.dropdown-danger { color: var(--danger); }
+.dropdown-danger:hover { background: rgba(239,68,68,0.08); }
+.dropdown-divider { height: 1px; background: var(--border); margin: 0.25rem 0.5rem; }
 </style>

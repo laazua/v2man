@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contact', '0003_remove_reply_alter_fields'),
+        ("contact", "0003_remove_reply_alter_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='contactmessage',
-            name='visible_to_user',
-            field=models.BooleanField(default=True, verbose_name='用户可见'),
+            model_name="contactmessage",
+            name="visible_to_user",
+            field=models.BooleanField(default=True, verbose_name="用户可见"),
         ),
     ]

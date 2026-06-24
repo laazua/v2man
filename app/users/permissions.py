@@ -1,6 +1,6 @@
 """Custom permission classes for the v2man API."""
 
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsAdminUser(BasePermission):
@@ -28,8 +28,8 @@ class IsOwnerOrAdmin(BasePermission):
         """Check object-level permission for ownership or admin status."""
         if request.user.is_staff:
             return True
-        if hasattr(obj, 'user'):
+        if hasattr(obj, "user"):
             return obj.user == request.user
-        if hasattr(obj, 'id'):
+        if hasattr(obj, "id"):
             return obj == request.user
         return False

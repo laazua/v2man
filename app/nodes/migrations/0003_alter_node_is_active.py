@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0002_initial'),
+        ("nodes", "0002_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='node',
-            name='is_active',
-            field=models.BooleanField(db_index=True, default=True, verbose_name='启用'),
+            model_name="node",
+            name="is_active",
+            field=models.BooleanField(
+                db_index=True, default=True, verbose_name="启用"
+            ),
         ),
     ]

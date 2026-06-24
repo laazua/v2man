@@ -12,12 +12,8 @@ class TrafficLog(models.Model):
         on_delete=models.CASCADE,
         related_name="traffic_logs",
     )
-    upload_bytes = models.BigIntegerField(
-        default=0, verbose_name="上传字节"
-    )
-    download_bytes = models.BigIntegerField(
-        default=0, verbose_name="下载字节"
-    )
+    upload_bytes = models.BigIntegerField(default=0, verbose_name="上传字节")
+    download_bytes = models.BigIntegerField(default=0, verbose_name="下载字节")
     recorded_at = models.DateTimeField(
         auto_now_add=True, verbose_name="记录时间"
     )

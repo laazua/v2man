@@ -7,26 +7,56 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Plan',
+            name="Plan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=64, verbose_name='套餐名称')),
-                ('price', models.DecimalField(decimal_places=2, max_digits=8, verbose_name='价格')),
-                ('traffic_limit', models.BigIntegerField(help_text='单位 MB，0 表示不限', verbose_name='流量上限(MB)')),
-                ('duration_days', models.IntegerField(verbose_name='有效期(天)')),
-                ('is_active', models.BooleanField(default=True, verbose_name='启用')),
-                ('sort_order', models.IntegerField(default=0, verbose_name='排序')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=64, verbose_name="套餐名称"),
+                ),
+                (
+                    "price",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=8, verbose_name="价格"
+                    ),
+                ),
+                (
+                    "traffic_limit",
+                    models.BigIntegerField(
+                        help_text="单位 MB，0 表示不限",
+                        verbose_name="流量上限(MB)",
+                    ),
+                ),
+                (
+                    "duration_days",
+                    models.IntegerField(verbose_name="有效期(天)"),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(default=True, verbose_name="启用"),
+                ),
+                (
+                    "sort_order",
+                    models.IntegerField(default=0, verbose_name="排序"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': '套餐',
-                'db_table': 'plans',
-                'ordering': ['sort_order', 'id'],
+                "verbose_name": "套餐",
+                "db_table": "plans",
+                "ordering": ["sort_order", "id"],
             },
         ),
     ]

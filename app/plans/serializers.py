@@ -12,8 +12,8 @@ class PlanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Plan
-        fields = '__all__'
+        fields = "__all__"
 
     def get_price_display(self, obj: Plan) -> str:
         """Return price formatted with yen symbol."""
-        return f'¥{obj.price}'
+        return f"¥{obj.price}"

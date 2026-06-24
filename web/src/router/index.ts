@@ -47,12 +47,25 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('access_token')
   if (to.meta.requiresAuth && !token) {
     next('/splash')
   } else if (to.path === '/splash' && token) {
     next('/')
+  } else if (to.path.startsWith('/admin') && token) {
+    try {
+      const { default: api } = await import('../api')
+      const { data } = await api.get('/auth/profile/')
+      if (!data.is_staff) {
+        next('/')
+        return
+      }
+    } catch {
+      next('/login')
+      return
+    }
+    next()
   } else {
     next()
   }

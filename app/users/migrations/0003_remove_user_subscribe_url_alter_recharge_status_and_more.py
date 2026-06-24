@@ -6,22 +6,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0002_recharge_wallet'),
+        ("users", "0002_recharge_wallet"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='user',
-            name='subscribe_url',
+            model_name="user",
+            name="subscribe_url",
         ),
         migrations.AlterField(
-            model_name='recharge',
-            name='status',
-            field=models.CharField(choices=[('pending', '待确认'), ('completed', '已完成'), ('failed', '失败')], db_index=True, default='pending', max_length=16, verbose_name='状态'),
+            model_name="recharge",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "待确认"),
+                    ("completed", "已完成"),
+                    ("failed", "失败"),
+                ],
+                db_index=True,
+                default="pending",
+                max_length=16,
+                verbose_name="状态",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='expire_date',
-            field=models.DateTimeField(blank=True, db_index=True, null=True, verbose_name='到期时间'),
+            model_name="user",
+            name="expire_date",
+            field=models.DateTimeField(
+                blank=True, db_index=True, null=True, verbose_name="到期时间"
+            ),
         ),
     ]

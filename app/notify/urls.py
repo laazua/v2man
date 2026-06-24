@@ -5,21 +5,21 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('notifications/', views.NotificationListView.as_view()),
+    path("notifications/", views.NotificationListView.as_view()),
     path(
-        'notifications/unread-count/',
+        "notifications/unread-count/",
         views.UnreadCountView.as_view(),
     ),
     path(
-        'notifications/mark-read/',
+        "notifications/mark-read/",
         views.MarkReadView.as_view(),
     ),
     path(
-        'admin/notifications/',
+        "admin/notifications/",
         views.AdminNotificationListCreateView.as_view(),
     ),
     path(
-        'admin/notifications/<int:pk>/',
+        "admin/notifications/<int:pk>/",
         views.AdminNotificationDetailView.as_view(),
     ),
 ]

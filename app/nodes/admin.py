@@ -11,7 +11,12 @@ class NodeAdmin(admin.ModelAdmin):
     """Admin view for managing V2Ray nodes."""
 
     list_display = [
-        "name", "protocol", "address", "port", "is_active", "sort_order",
+        "name",
+        "protocol",
+        "address",
+        "port",
+        "is_active",
+        "sort_order",
     ]
     list_filter = ["protocol", "is_active"]
 

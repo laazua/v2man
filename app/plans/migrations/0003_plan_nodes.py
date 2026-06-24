@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nodes', '0003_alter_node_is_active'),
-        ('plans', '0002_alter_plan_is_active'),
+        ("nodes", "0003_alter_node_is_active"),
+        ("plans", "0002_alter_plan_is_active"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='plan',
-            name='nodes',
-            field=models.ManyToManyField(blank=True, to='nodes.node', verbose_name='关联节点'),
+            model_name="plan",
+            name="nodes",
+            field=models.ManyToManyField(
+                blank=True, to="nodes.node", verbose_name="关联节点"
+            ),
         ),
     ]

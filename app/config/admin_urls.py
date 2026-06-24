@@ -16,18 +16,18 @@ from users.admin_views import (
 )
 
 router = DefaultRouter()
-router.register(r'users', AdminUserViewSet)
-router.register(r'nodes', AdminNodeViewSet)
-router.register(r'plans', AdminPlanViewSet)
-router.register(r'recharges', AdminRechargeViewSet)
-router.register(r'contact', AdminContactViewSet, basename='admin-contact')
+router.register(r"users", AdminUserViewSet)
+router.register(r"nodes", AdminNodeViewSet)
+router.register(r"plans", AdminPlanViewSet)
+router.register(r"recharges", AdminRechargeViewSet)
+router.register(r"contact", AdminContactViewSet, basename="admin-contact")
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('payment/qr/', AdminPaymentQRView.as_view(), name='admin-payment-qr'),
+    path("", include(router.urls)),
+    path("payment/qr/", AdminPaymentQRView.as_view(), name="admin-payment-qr"),
     path(
-        'payment/settings/',
+        "payment/settings/",
         AdminPaymentSettingsView.as_view(),
-        name='admin-payment-settings',
+        name="admin-payment-settings",
     ),
 ]
