@@ -77,18 +77,33 @@ DEFAULT_FROM_EMAIL=noreply@example.com
 
 ### 数据库密码
 
-`docker-compose.yml` 的 db 服务使用 `${DB_PASSWORD:?...}` 引用，**启动前必须传入 `DB_PASSWORD` 环境变量**：
+`docker-compose.yml` 的 db 服务使用 `${DB_PASSWORD:?...}` 引用，**启动前必须传入 `DB_PASSWORD` 环境变量**。
+
+**方式一：export 后直接执行（用户有 docker 权限时）**
 
 ```bash
 export DB_PASSWORD=your-strong-password
 docker compose up -d
 ```
 
-或在 `docker-compose.yml` 同目录创建 `.env` 文件写入：
+**方式二：sudo 执行（需用 `-E` 保留当前 shell 环境变量）**
+
+```bash
+export DB_PASSWORD=your-strong-password
+sudo -E docker compose up -d
+```
+
+> `sudo -E` 是必需的，因为 `export` 设置的变量只对当前用户 shell 生效，`sudo` 默认不继承用户环境变量。
+
+**方式三：Compose 同级 `.env` 文件（推荐，sudo 也可用）**
+
+在 `docker-compose.yml` 同目录创建 `.env` 文件：
 
 ```ini
 DB_PASSWORD=your-strong-password
 ```
+
+之后正常执行 `docker compose up -d`（或 `sudo docker compose up -d`）即可，Compose 自动读取同目录的 `.env` 文件。
 
 如果修改了数据库用户名，还需同步设置：
 
